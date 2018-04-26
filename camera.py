@@ -1,17 +1,23 @@
 #!/usr/bin/env python3
 
-import cv2.cv as cv
+# http://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_gui/py_video_display/py_video_display.html
+
+import cv2 as cv
 import time
 
-cv.NamedWindow("camera", 1)
+cv.namedWindow("camera", 1)
 
-capture = cv.CaptureFromCAM(0)
-#cv.SetCaptureProperty(capture, 3, 360)
-#cv.SetCaptureProperty(capture, 4, 240)
+capture = cv.VideoCapture(0)
+capture.set(3, 160)
+capture.set(4, 120)
 
 while True:
-    img = cv.QueryFrame(capture)
-    cv.ShowImage("camera", img)
-    if cv.WaitKey(10) == 27:
+    ret, img = capture.read()
+    cv.imshow("camera", img)
+    #gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    #cv.imshow("camera", gray)
+    if cv.waitKey(10) == 27:
         break
-cv.DestroyAllWindows()
+
+capture.release()
+cv.destroyAllWindows()
