@@ -12,7 +12,7 @@ wget https://www.piwheels.org/simple/opencv-python/opencv_python-3.4.0.12-cp35-c
 git clone https://github.com/mdadams/jasper
 sudo bash -C <<EOF
 apt-get update
-apt-get install -y cmake libjpeg62-turbo libtiff5 libpng16-16 libavcodec57 libavformat57 libswscale4 libv4l-0 libxvidcore4 libx264-148 libgtk2.0-bin libatlas3-base libwebp6 libopencv-dev libgstreamer1.0-0 libqtgui4 libqt4-test xterm
+apt-get install -y cmake libjpeg62-turbo libtiff5 libpng16-16 libavcodec57 libavformat57 libswscale4 libv4l-0 libxvidcore4 libx264-148 libgtk2.0-bin libatlas3-base libwebp6 libopencv-dev libgstreamer1.0-0 libqtgui4 libqt4-test xterm xauth
 python3 get-pip.py
 wheel install opencv_python-3.4.0.12-cp35-cp35m-linux_armv7l.whl
 EOF
