@@ -1,5 +1,7 @@
 The version of python-opencv for Debian Stretch is only for Python2 (https://packages.debian.org/stretch/python-opencv). You need to use Buster to get a build for Python3 (https://packages.debian.org/buster/python-opencv).
 
+I probably could have installed pip3 via 'sudo apt install python3 python3-pip'.
+
 The pip repository for Python3 doesn't seem to have an armv7 build, so you need to use a version built for Raspberry Pi Zero or build it yourself.
 
 The instructions below grab the Debian Stretch OpenCV library and the opencv-python pre-built for R-Pi0, assuming a Debian Stretch BeagleBone Blue image.
@@ -12,8 +14,9 @@ wget https://www.piwheels.org/simple/opencv-python/opencv_python-3.4.0.12-cp35-c
 git clone https://github.com/mdadams/jasper
 sudo bash -C <<EOF
 apt-get update
-apt-get install -y cmake libjpeg62-turbo libtiff5 libpng16-16 libavcodec57 libavformat57 libswscale4 libv4l-0 libxvidcore4 libx264-148 libgtk2.0-bin libatlas3-base libwebp6 libopencv-dev libgstreamer1.0-0 libqtgui4 libqt4-test xterm xauth
+DEBIAN_FRONTEND=noninteractive apt-get install -y cmake libjpeg62-turbo libtiff5 libpng16-16 libavcodec57 libavformat57 libswscale4 libv4l-0 libxvidcore4 libx264-148 libgtk2.0-bin libatlas3-base libwebp6 libopencv-dev libgstreamer1.0-0 libqtgui4 libqt4-test xterm xauth libroboticscape
 python3 get-pip.py
+pip install rcpy
 wheel install opencv_python-3.4.0.12-cp35-cp35m-linux_armv7l.whl
 EOF
 cd jasper
