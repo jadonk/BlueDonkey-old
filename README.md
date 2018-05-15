@@ -11,9 +11,10 @@ wget https://www.piwheels.org/simple/opencv-python/opencv_python-3.4.0.12-cp35-c
 git clone https://github.com/mdadams/jasper
 sudo bash -C <<EOF
 apt-get update
-DEBIAN_FRONTEND=noninteractive apt-get install -y cmake libjpeg62-turbo libtiff5 libpng16-16 libavcodec57 libavformat57 libswscale4 libv4l-0 libxvidcore4 libx264-148 libgtk2.0-bin libatlas3-base libwebp6 libopencv-dev libgstreamer1.0-0 libqtgui4 libqt4-test roboticscape python3 python3-pip python3-wheel xterm xauth
+DEBIAN_FRONTEND=noninteractive apt-get install -y cmake libjpeg62-turbo libtiff5 libpng16-16 libavcodec57 libavformat57 libswscale4 libv4l-0 libxvidcore4 libx264-148 libgtk2.0-bin libatlas3-base libwebp6 libopencv-dev libgstreamer1.0-0 libqtgui4 libqt4-test roboticscape python3 python3-pip python3-wheel xterm xauth libsdl1.2-dev
 python3 -m wheel install opencv_python-3.4.0.12-cp35-cp35m-linux_armv7l.whl
 #pip3 install rcpy
+pip3 install pygame
 EOF
 cd jasper
 cmake . -DALLOW_IN_SOURCE_BUILD=1
