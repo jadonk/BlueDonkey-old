@@ -25,3 +25,16 @@ cd /opt/source/rcpy
 git pull
 sudo python3 setup.py install
 ```
+
+If you don't have a recent image, update some stuff first:
+
+```sh
+sudo bash -C <<EOF
+cd /opt/scripts/tools
+git pull
+./update_kernel.sh --lts-4_14
+cd developers
+yes | ./update_bootloader.sh
+apt-get install roboticscape
+EOF
+```
