@@ -26,6 +26,8 @@ git pull
 sudo python3 setup.py install
 ```
 
+# Update kernel and boot scripts
+
 If you don't have a recent image, update some stuff first:
 
 ```sh
@@ -35,6 +37,16 @@ git pull
 ./update_kernel.sh --lts-4_14
 cd developers
 yes | ./update_bootloader.sh
-apt-get install roboticscape
+EOF
+```
+
+Reboot
+
+# Update distro
+
+```sh
+sudo bash -C <<EOF
+apt-mark hold c9-core-installer
+DEBIAN_FRONTEND=noninteractive apt-get -yq upgrade
 EOF
 ```
