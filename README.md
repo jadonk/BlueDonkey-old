@@ -53,8 +53,9 @@ EOF
 
 # Buster
 
-* https://rcn-ee.net/rootfs/bb.org/testing/2018-06-03/buster-iot/bone-debian-buster-iot-armhf-2018-06-03-4gb.img.xz
+* https://rcn-ee.net/rootfs/bb.org/testing/2018-06-04/buster-iot/bone-debian-buster-iot-armhf-2018-06-04-4gb.img.xz
 
 ```sh
-???
+sudo apt-get update
+sudo apt-get install -y python3-pip python3-wheel libopencv-dev
 ```
