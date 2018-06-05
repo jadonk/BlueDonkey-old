@@ -57,5 +57,5 @@ EOF
 
 ```sh
 sudo apt-get update
-sudo apt-get install -y python3-pip python3-wheel libopencv-dev
+sudo apt-get install -y python3-pip python3-wheel python3-opencv libopencv-dev
 ```
