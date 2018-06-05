@@ -1,8 +1,22 @@
+#!/usr/bin/env python3
+import os, sys
+if not os.geteuid() == 0:
+    sys.exit("\nPlease run as root.\n")
+if sys.version_info < (3,0):
+    sys.exit("\nPlease run under python3.\n")
+
+import cv2, rcpy, datetime, pygame
+from rcpy.servo import servo1
+rcpy.servo.enable()
+servo1.set(0)
+servo1clk = rcpy.clock.Clock(servo1, 0.02)
+servo1clk.start()
+
 # This file was originally part of the OpenMV project.
 # Copyright (c) 2013-2017 Ibrahim Abdelkader <iabdalkader@openmv.io> & Kwabena W. Agyeman <kwagyeman@openmv.io>
 # This work is licensed under the MIT license, see the file LICENSE for details.
 
-import sensor, image, time, math, pyb
+import math
 
 ###########
 # Settings
@@ -12,10 +26,14 @@ COLOR_LINE_FOLLOWING = True # False to use grayscale thresholds, true to use col
 COLOR_THRESHOLDS = [( 85, 100,  -40,  -10,    0,  127)] # Yellow Line.
 GRAYSCALE_THRESHOLDS = [(240, 255)] # White Line.
 COLOR_HIGH_LIGHT_THRESHOLDS = [(80, 100, -10, 10, -10, 10)]
+COLOR_HIGH_LIGHT_THRESHOLDS_MAX = cv.Scalar(80, 100, -10)
+COLOR_HIGH_LIGHT_THRESHOLDS_MIN = cv.Scalar(10, -10, 10)
 GRAYSCALE_HIGH_LIGHT_THRESHOLDS = [(250, 255)]
-BINARY_VIEW = False # Helps debugging but costs FPS if on.
+#BINARY_VIEW = False # Helps debugging but costs FPS if on.
 DO_NOTHING = False # Just capture frames...
-FRAME_SIZE = sensor.QQVGA # Frame size.
+#FRAME_SIZE = sensor.QQVGA # Frame size.
+FRAME_WIDTH = 160
+FRAME_HEIGHT = 120
 FRAME_REGION = 0.75 # Percentage of the image from the bottom (0 - 1.0).
 FRAME_WIDE = 1.0 # Percentage of the frame width.
 
@@ -43,16 +61,17 @@ STEERING_I_MIN = -0.0
 STEERING_I_MAX = 0.0
 STEERING_D_GAIN = -9 # Make this larger as you increase your speed and vice versa.
 
-# Selects servo controller module...
-ARDUINO_SERVO_CONTROLLER_ATTACHED = True
+# Tweak these values for your robocar.
+#THROTTLE_SERVO_MIN_US = 1500
+#THROTTLE_SERVO_MAX_US = 2000
+THROTTLE_SERVO_MIN_US = 0
+THROTTLE_SERVO_MAX_US = 0.9
 
 # Tweak these values for your robocar.
-THROTTLE_SERVO_MIN_US = 1500
-THROTTLE_SERVO_MAX_US = 2000
-
-# Tweak these values for your robocar.
-STEERING_SERVO_MIN_US = 700
-STEERING_SERVO_MAX_US = 2300
+#STEERING_SERVO_MIN_US = 700
+#STEERING_SERVO_MAX_US = 2300
+STEERING_SERVO_MIN_US = -1.4
+STEERING_SERVO_MAX_US = 1.4
 
 ###########
 # Setup
@@ -122,47 +141,35 @@ def figure_out_my_throttle(steering): # steering -> [0:180]
 # Servo Control Code
 #
 
-device = None
-
-if ARDUINO_SERVO_CONTROLLER_ATTACHED:
-    device = pyb.UART(3, 19200, timeout_char = 1000)
-else:
-    import servo
-    import machine
-    device = servo.Servos(machine.I2C(sda = machine.Pin("P5"), scl = machine.Pin("P4")), address = 0x40, freq = 50)
-
 # throttle [0:100] (101 values) -> [THROTTLE_SERVO_MIN_US, THROTTLE_SERVO_MAX_US]
 # steering [0:180] (181 values) -> [STEERING_SERVO_MIN_US, STEERING_SERVO_MAX_US]
 def set_servos(throttle, steering):
     throttle = THROTTLE_SERVO_MIN_US + ((throttle * (THROTTLE_SERVO_MAX_US - THROTTLE_SERVO_MIN_US + 1)) / 101)
     steering = STEERING_SERVO_MIN_US + ((steering * (STEERING_SERVO_MAX_US - STEERING_SERVO_MIN_US + 1)) / 181)
-    if ARDUINO_SERVO_CONTROLLER_ATTACHED:
-        device.write("{%05d,%05d}\r\n" % (throttle, steering))
-    else:
-        device.position(0, us=throttle)
-        device.position(1, us=steering)
+    servo3.set(throttle)
+    servo1.set(steering)
 
 #
 # Camera Control Code
 #
 
-sensor.reset()
-sensor.set_pixformat(sensor.RGB565 if COLOR_LINE_FOLLOWING else sensor.GRAYSCALE)
-sensor.set_framesize(FRAME_SIZE)
-sensor.set_vflip(True)
-sensor.set_hmirror(True)
-sensor.set_windowing((int((sensor.width() / 2) - ((sensor.width() / 2) * FRAME_WIDE)), int(sensor.height() * (1.0 - FRAME_REGION)), \
-                     int((sensor.width() / 2) + ((sensor.width() / 2) * FRAME_WIDE)), int(sensor.height() * FRAME_REGION)))
-sensor.skip_frames(time = 200)
-if COLOR_LINE_FOLLOWING: sensor.set_auto_gain(False)
-if COLOR_LINE_FOLLOWING: sensor.set_auto_whitebal(False)
-clock = time.clock()
+capture = cv2.VideoCapture(0)
+capture.set(cv2.CAP_PROP_FPS, 10)
+capture.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH)
+capture.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
+
+#sensor.set_vflip(True)
+#sensor.set_hmirror(True)
+#sensor.set_windowing((int((sensor.width() / 2) - ((sensor.width() / 2) * FRAME_WIDE)), int(sensor.height() * (1.0 - FRAME_REGION)), \
+#                     int((sensor.width() / 2) + ((sensor.width() / 2) * FRAME_WIDE)), int(sensor.height() * FRAME_REGION)))
+#sensor.skip_frames(time = 200)
+clock = pygame.time.Clock()
 
 ###########
 # Loop
 ###########
 
-old_time = pyb.millis()
+old_time = datetime.datetime.now()
 
 throttle_old_result = None
 throttle_i_output = 0
@@ -174,7 +181,8 @@ steering_output = STEERING_OFFSET
 
 while True:
     clock.tick()
-    img = sensor.snapshot()
+    ret, img = capture.read()
+    mask = cv2.inRange(img, )
     img.binary(COLOR_HIGH_LIGHT_THRESHOLDS if COLOR_LINE_FOLLOWING else GRAYSCALE_HIGH_LIGHT_THRESHOLDS, zero = True)
     img.histeq()
 
@@ -193,8 +201,8 @@ while True:
     if line and (line.magnitude() >= MAG_THRESHOLD):
         img.draw_line(line.line(), color = (127, 127, 127) if COLOR_LINE_FOLLOWING else 127)
 
-        new_time = pyb.millis()
-        delta_time = new_time - old_time
+        new_time = datetime.datetime.now()
+        delta_time = (new_time - old_time).microseconds / 1000
         old_time = new_time
 
         #
@@ -240,4 +248,4 @@ while True:
         print_string = "Line Lost - throttle %d, steering %d" % (throttle_output , steering_output)
 
     set_servos(throttle_output, steering_output)
-    print("FPS %f - %s" % (clock.fps(), print_string))
+    print("FPS %f - %s" % (clock.get_fps(), print_string))
