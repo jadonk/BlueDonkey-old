@@ -1,23 +1,14 @@
 #!/usr/bin/env python3
+import os, sys
+if not os.geteuid() == 0:
+    sys.exit("\nPlease run as root.\n")
+if sys.version_info < (3,0):
+    sys.exit("\nPlease run under python3.\n")
 
-# http://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_gui/py_video_display/py_video_display.html
-
-import cv2 as cv
-import time
-
-cv.namedWindow("camera", 1)
-
-capture = cv.VideoCapture(0)
+import cv2
+capture = cv2.VideoCapture(0)
 capture.set(3, 160)
 capture.set(4, 120)
-
-while True:
-    ret, img = capture.read()
-    cv.imshow("camera", img)
-    #gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    #cv.imshow("camera", gray)
-    if cv.waitKey(10) == 27:
-        break
-
+ret, img = capture.read()
+cv2.imwrite('capture.jpg',img)
 capture.release()
-cv.destroyAllWindows()
