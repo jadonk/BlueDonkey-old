@@ -50,3 +50,11 @@ apt-mark hold c9-core-installer
 DEBIAN_FRONTEND=noninteractive apt-get -yq upgrade
 EOF
 ```
+
+# Buster
+
+* https://rcn-ee.net/rootfs/bb.org/testing/2018-06-03/buster-iot/bone-debian-buster-iot-armhf-2018-06-03-4gb.img.xz
+
+```sh
+???
+```
