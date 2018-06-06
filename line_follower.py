@@ -40,8 +40,9 @@ COLOR_LINE_FOLLOWING = True # False to use grayscale thresholds, true to use col
 COLOR_THRESHOLDS = [( 85, 100,  -40,  -10,    0,  127)] # Yellow Line.
 GRAYSCALE_THRESHOLDS = [(240, 255)] # White Line.
 COLOR_HIGH_LIGHT_THRESHOLDS = [(80, 100, -10, 10, -10, 10)]
-COLOR_HIGH_LIGHT_THRESHOLDS_MAX = (80, 100, -10)
-COLOR_HIGH_LIGHT_THRESHOLDS_MIN = (10, -10, 10)
+# https://pythonprogramming.net/color-filter-python-opencv-tutorial/
+COLOR_HIGH_LIGHT_THRESHOLDS_MAX = numpy.array([80, 100, -10])
+COLOR_HIGH_LIGHT_THRESHOLDS_MIN = numpy.array([10, -10, 10])
 GRAYSCALE_HIGH_LIGHT_THRESHOLDS = [(250, 255)]
 #BINARY_VIEW = False # Helps debugging but costs FPS if on.
 DO_NOTHING = False # Just capture frames...
@@ -197,7 +198,8 @@ while True:
     clock.tick()
     ret, img = capture.read()
     mask = cv2.inRange(img, COLOR_HIGH_LIGHT_THRESHOLDS_MIN, COLOR_HIGH_LIGHT_THRESHOLDS_MAX)
-    img = img & mask
+    mask_rgb = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
+    img = img & mask_rgb
     cv2.imwrite("line_follower.jpg", img)
     continue
 
