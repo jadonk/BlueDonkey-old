@@ -5,10 +5,15 @@ if not os.geteuid() == 0:
 if sys.version_info < (3,0):
     sys.exit("\nPlease run under python3.\n")
 
-import cv2
+import cv2, time
 capture = cv2.VideoCapture(0)
-capture.set(3, 160)
-capture.set(4, 120)
+capture.set(cv2.CAP_PROP_FPS, 10)
+capture.set(cv2.CAP_PROP_FRAME_WIDTH, 160)
+capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 120)
 ret, img = capture.read()
-cv2.imwrite('capture.jpg',img)
+
+while True:
+    cv2.imwrite('camera.jpg', img)
+    time.sleep(0.1)
+
 capture.release()

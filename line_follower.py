@@ -5,12 +5,26 @@ if not os.geteuid() == 0:
 if sys.version_info < (3,0):
     sys.exit("\nPlease run under python3.\n")
 
-import cv2, rcpy, datetime, pygame
+import cv2, rcpy, datetime, time, numpy, pygame
+
+# Enable steering servo
 from rcpy.servo import servo1
 rcpy.servo.enable()
 servo1.set(0)
 servo1clk = rcpy.clock.Clock(servo1, 0.02)
 servo1clk.start()
+
+# Enable throttle
+from rcpy.servo import servo3
+rcpy.servo.enable()
+servo3.set(0)
+servo3clk = rcpy.clock.Clock(servo3, 0.02)
+servo3clk.start()
+time.sleep(1)
+print("Arming throttle")
+servo3.set(-0.1)
+time.sleep(3)
+servo3.set(0)
 
 # This file was originally part of the OpenMV project.
 # Copyright (c) 2013-2017 Ibrahim Abdelkader <iabdalkader@openmv.io> & Kwabena W. Agyeman <kwagyeman@openmv.io>
@@ -26,8 +40,8 @@ COLOR_LINE_FOLLOWING = True # False to use grayscale thresholds, true to use col
 COLOR_THRESHOLDS = [( 85, 100,  -40,  -10,    0,  127)] # Yellow Line.
 GRAYSCALE_THRESHOLDS = [(240, 255)] # White Line.
 COLOR_HIGH_LIGHT_THRESHOLDS = [(80, 100, -10, 10, -10, 10)]
-COLOR_HIGH_LIGHT_THRESHOLDS_MAX = cv.Scalar(80, 100, -10)
-COLOR_HIGH_LIGHT_THRESHOLDS_MIN = cv.Scalar(10, -10, 10)
+COLOR_HIGH_LIGHT_THRESHOLDS_MAX = (80, 100, -10)
+COLOR_HIGH_LIGHT_THRESHOLDS_MIN = (10, -10, 10)
 GRAYSCALE_HIGH_LIGHT_THRESHOLDS = [(250, 255)]
 #BINARY_VIEW = False # Helps debugging but costs FPS if on.
 DO_NOTHING = False # Just capture frames...
@@ -65,13 +79,13 @@ STEERING_D_GAIN = -9 # Make this larger as you increase your speed and vice vers
 #THROTTLE_SERVO_MIN_US = 1500
 #THROTTLE_SERVO_MAX_US = 2000
 THROTTLE_SERVO_MIN_US = 0
-THROTTLE_SERVO_MAX_US = 0.9
+THROTTLE_SERVO_MAX_US = 0.2
 
 # Tweak these values for your robocar.
 #STEERING_SERVO_MIN_US = 700
 #STEERING_SERVO_MAX_US = 2300
-STEERING_SERVO_MIN_US = -1.4
-STEERING_SERVO_MAX_US = 1.4
+STEERING_SERVO_MIN_US = -0.5
+STEERING_SERVO_MAX_US = 0.5
 
 ###########
 # Setup
@@ -182,13 +196,10 @@ steering_output = STEERING_OFFSET
 while True:
     clock.tick()
     ret, img = capture.read()
-    mask = cv2.inRange(img, )
-    img.binary(COLOR_HIGH_LIGHT_THRESHOLDS if COLOR_LINE_FOLLOWING else GRAYSCALE_HIGH_LIGHT_THRESHOLDS, zero = True)
-    img.histeq()
-
-    if BINARY_VIEW: img = img.binary(COLOR_THRESHOLDS if COLOR_LINE_FOLLOWING else GRAYSCALE_THRESHOLDS)
-    if BINARY_VIEW: img.erode(1, threshold = 5).dilate(1, threshold = 1)
-    if DO_NOTHING: continue
+    mask = cv2.inRange(img, COLOR_HIGH_LIGHT_THRESHOLDS_MIN, COLOR_HIGH_LIGHT_THRESHOLDS_MAX)
+    img = img & mask
+    cv2.imwrite("line_follower.jpg", img)
+    continue
 
     # We call get regression below to get a robust linear regression of the field of view.
     # This returns a line object which we can use to steer the robocar.
