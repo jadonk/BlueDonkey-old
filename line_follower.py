@@ -41,8 +41,8 @@ COLOR_THRESHOLDS = [( 85, 100,  -40,  -10,    0,  127)] # Yellow Line.
 GRAYSCALE_THRESHOLDS = [(240, 255)] # White Line.
 COLOR_HIGH_LIGHT_THRESHOLDS = [(80, 100, -10, 10, -10, 10)]
 # https://pythonprogramming.net/color-filter-python-opencv-tutorial/
-COLOR_HIGH_LIGHT_THRESHOLDS_MAX = numpy.array([80, 100, -10])
-COLOR_HIGH_LIGHT_THRESHOLDS_MIN = numpy.array([10, -10, 10])
+COLOR_HIGH_LIGHT_THRESHOLDS_MAX = numpy.array([75*360/255, 100*2.55, 100*2.55])
+COLOR_HIGH_LIGHT_THRESHOLDS_MIN = numpy.array([50*360/255, 65*2.55, 75*2.55])
 GRAYSCALE_HIGH_LIGHT_THRESHOLDS = [(250, 255)]
 #BINARY_VIEW = False # Helps debugging but costs FPS if on.
 DO_NOTHING = False # Just capture frames...
@@ -197,10 +197,11 @@ steering_output = STEERING_OFFSET
 while True:
     clock.tick()
     ret, img = capture.read()
-    mask = cv2.inRange(img, COLOR_HIGH_LIGHT_THRESHOLDS_MIN, COLOR_HIGH_LIGHT_THRESHOLDS_MAX)
-    mask_rgb = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
-    img = img & mask_rgb
-    cv2.imwrite("line_follower.jpg", img)
+    img8 = numpy.uint8(img)
+    img_hsv = cv2.cvtColor(img8, cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(img_hsv, COLOR_HIGH_LIGHT_THRESHOLDS_MIN, COLOR_HIGH_LIGHT_THRESHOLDS_MAX)
+    res = cv2.bitwise_and(img, img, mask=mask)
+    cv2.imwrite("line_follower.jpg", res)
     continue
 
     # We call get regression below to get a robust linear regression of the field of view.
