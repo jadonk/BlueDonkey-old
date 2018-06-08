@@ -11,24 +11,27 @@ capture.set(cv2.CAP_PROP_FPS, 10)
 capture.set(cv2.CAP_PROP_FRAME_WIDTH, 160)
 capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 120)
 capture.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
-capture.set(cv2.CAP_PROP_EXPOSURE, 0.005)
+capture.set(cv2.CAP_PROP_EXPOSURE, 0.003)
 
 import numpy
 
-while(capture.isOpened()):
-    ret, frame = capture.read()
+def capture_and_process_frame():
+    #ret, frame = capture.read()
+    frame = cv2.imread('camera01.jpg')
+    ret = True
 
     if ret:
         cv2.imwrite('/run/bluedonkey/camera.jpg', frame)
         lower_yellow = numpy.array([0,160,160])
-        upper_yellow = numpy.array([190,255,255])
+        upper_yellow = numpy.array([220,255,255])
         mask = cv2.inRange(frame, lower_yellow, upper_yellow)
         res = cv2.bitwise_and(frame, frame, mask=mask)
         #cv2.imwrite('/run/bluedonkey/filtered.jpg', res)
         gray = cv2.cvtColor(res, cv2.COLOR_BGR2GRAY)
         ret, thresh = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
         im2, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-        cnt = contours[0]
+        cnt = contours[1]
+        cv2.drawContours(res, [cnt], -1, (255,0,0), 2)
         [vx,vy,x,y] = cv2.fitLine(cnt, cv2.DIST_L2, 0, 0.01, 0.01)
         lefty = int((-x*vy/vx) + y)
         righty = int(((160-x)*vy/vx)+y)
@@ -37,4 +40,7 @@ while(capture.isOpened()):
     
     time.sleep(0.2)
 
+#while(capture.isOpened()):
+#   capture_and_process_frame()
+capture_and_process_frame()
 capture.release()
