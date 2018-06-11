@@ -26,7 +26,7 @@ def capture_and_process_frame():
         upper_yellow = numpy.array([220,255,255])
         mask = cv2.inRange(frame, lower_yellow, upper_yellow)
         res = cv2.bitwise_and(frame, frame, mask=mask)
-        cv2.rectangle(res, (0,0), (159,119), (0,0,0), 2)
+        #cv2.rectangle(res, (0,0), (159,119), (0,0,0), 2)
         #cv2.imwrite('/run/bluedonkey/filtered.jpg', res)
         gray = cv2.cvtColor(res, cv2.COLOR_BGR2GRAY)
         blur = cv2.GaussianBlur(gray, (7, 7), 0)
@@ -34,14 +34,22 @@ def capture_and_process_frame():
         dilation = cv2.dilate(edges, cv2.getStructuringElement(cv2.MORPH_DILATE, (5, 5)))
         erosion = cv2.erode(dilation, cv2.getStructuringElement(cv2.MORPH_ERODE, (3, 3)))
         merge = gray + erosion
-        lines = cv2.HoughLinesP(merge, 2, numpy.pi/180, 12, numpy.array([]), minLineLength=10, maxLineGap=30)
+        lines = cv2.HoughLinesP(merge, 2, numpy.pi/180, 12, numpy.array([]), minLineLength=20, maxLineGap=40)
         line_img = numpy.zeros((merge.shape[0], merge.shape[1], 3), dtype=numpy.uint8)
         for line in lines:
             for x1,y1,x2,y2 in line:
                 angle = numpy.arctan2(y2 - y1, x2 - x1) * 180. / numpy.pi
                 if ( (abs(angle) > 20.) and (abs(angle) < 90.)):
                     cv2.line(line_img, (x1, y1), (x2, y2), (0,0,255), 1)
-        cv2.imwrite('/run/bluedonkey/filtered.jpg', line_img)
+        res = cv2.addWeighted(res, 0.8, line_img, 1, 0)
+        gray_lines = cv2.cvtColor(line_img, cv2.COLOR_BGR2GRAY)
+        pixelpoints = cv2.findNonZero(gray_lines)
+        [vx,vy,x,y] = cv2.fitLine(pixelpoints, 4, 0, 0.01, 0.01)
+        lefty = int((-x*vy/vx) + y)
+        righty = int(((160-x)*vy/vx)+y)
+        res = cv2.line(res, (159,righty), (0,lefty), (0,255,0), 2)
+        m = vy/vx
+        cv2.imwrite('/run/bluedonkey/filtered.jpg', res)
     
     time.sleep(0.2)
 
