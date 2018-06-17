@@ -131,6 +131,7 @@ def figure_out_my_steering(line, img):
     xslope = line[0] / line[1]
     xint = xslope*line[3] - line[2]
     cx = xslope*cy + xint
+    print(xint, end="")
 
     # "cx_middle" is now the distance from the center of the line. This is our error method to stay
     # on the line. "cx_normal" normalizes the error to something like -1/+1 (it will go over this).
