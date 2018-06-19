@@ -11,7 +11,7 @@ import cv2, rcpy, datetime, time, numpy, pygame
 from rcpy.servo import servo1
 rcpy.servo.enable()
 servo1.set(0)
-servo1clk = rcpy.clock.Clock(servo1, 0.02)
+servo1clk = rcpy.clock.Clock(servo1, 0.05)
 servo1clk.start()
 
 # Enable throttle
@@ -80,13 +80,13 @@ STEERING_D_GAIN = -9 # Make this larger as you increase your speed and vice vers
 #THROTTLE_SERVO_MIN_US = 1500
 #THROTTLE_SERVO_MAX_US = 2000
 THROTTLE_SERVO_MIN_US = 0
-THROTTLE_SERVO_MAX_US = 0.2
+THROTTLE_SERVO_MAX_US = 0.01
 
 # Tweak these values for your robocar.
 #STEERING_SERVO_MIN_US = 700
 #STEERING_SERVO_MAX_US = 2300
-STEERING_SERVO_MIN_US = -0.5
-STEERING_SERVO_MAX_US = 0.5
+STEERING_SERVO_MIN_US = -0.4
+STEERING_SERVO_MAX_US = 0.4
 
 ###########
 # Setup
@@ -126,7 +126,7 @@ def figure_out_my_steering(line, img):
     height, width, layers = img.shape
     cy = height / 2
     xslope = line[0] / line[1]
-    xint = line[2]*xslope + line[3]
+    xint = xslope*line[3] - line[2]
     cx = xslope*cy + xint
 
     # "cx_middle" is now the distance from the center of the line. This is our error method to stay
@@ -201,7 +201,7 @@ while True:
     clock.tick()
     ret, img = capture.read()
     if ret:
-        cv2.imwrite('/run/bluedonkey/camera.jpg', img)
+        #cv2.imwrite('/run/bluedonkey/camera.jpg', img)
         mask = cv2.inRange(img, COLOR_HIGH_LIGHT_THRESHOLDS_MIN, COLOR_HIGH_LIGHT_THRESHOLDS_MAX)
         res = cv2.bitwise_and(img, img, mask=mask)
         gray = cv2.cvtColor(res, cv2.COLOR_BGR2GRAY)
@@ -221,13 +221,19 @@ while True:
         #gray_lines = cv2.cvtColor(line_img, cv2.COLOR_BGR2GRAY)
         #pixelpoints = cv2.findNonZero(gray_lines)
         pixelpoints = cv2.findNonZero(gray)
-        [vx,vy,x,y] = cv2.fitLine(pixelpoints, 4, 0, 0.01, 0.01)
-        line = [vx,vy,x,y]
+        try:
+            [vx,vy,x,y] = cv2.fitLine(pixelpoints, 4, 0, 0.01, 0.01)
+            line = [vx,vy,x,y]
+        except:
+            line = False
 
     print_string = ""
     if line:
-        res = cv2.line(res, (x,y), (x+20*vx,y+20*vy), (0,255,0), 2)
-        cv2.imwrite('/run/bluedonkey/filtered.jpg', res)
+        lefty = int((-x*vy/vx) + y)
+        righty = int(((160-x)*vy/vx)+y)
+        res = cv2.line(res, (159,righty), (0,lefty), (0,255,0), 2)
+        #res = cv2.line(res, (x,y), (x+20*vx,y+20*vy), (0,255,0), 2)
+        #cv2.imwrite('/run/bluedonkey/filtered.jpg', res)
         
         new_time = datetime.datetime.now()
         delta_time = (new_time - old_time).microseconds / 1000
@@ -249,7 +255,7 @@ while True:
                               (STEERING_D_GAIN * steering_d_output)
 
         # Steering goes from [-90,90] but we need to output [0,180] for the servos.
-        steering_output = STEERING_OFFSET + max(min(round(steering_pid_output), 180 - STEERING_OFFSET), STEERING_OFFSET - 180)
+        steering_output = STEERING_OFFSET + max(min(steering_pid_output, 180 - STEERING_OFFSET), STEERING_OFFSET - 180)
 
         #
         # Figure out throttle and do throttle PID
@@ -267,13 +273,13 @@ while True:
                               (THROTTLE_D_GAIN * throttle_d_output)
 
         # Throttle goes from 0% to 100%.
-        throttle_output = max(min(round(throttle_pid_output), 100), 0)
+        throttle_output = max(min(throttle_pid_output, 100), 0)
 
-        print_string = "Line Ok - throttle %d, steering %d - line t: %d, r: %d" % \
-            (throttle_output , steering_output, line.theta(), line.rho())
+        print_string = "Line Ok   - throttle %d, steering %d" % \
+            (throttle_output , steering_output)
 
     else:
         print_string = "Line Lost - throttle %d, steering %d" % (throttle_output , steering_output)
 
-    #set_servos(throttle_output, steering_output)
-    print("FPS %f - %s" % (clock.get_fps(), print_string))
+    set_servos(throttle_output, steering_output)
+    print("FPS %f - %s\r" % (clock.get_fps(), print_string), end="")
