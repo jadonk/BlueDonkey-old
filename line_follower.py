@@ -123,13 +123,16 @@ def figure_out_my_steering(line, img):
     # This formula comes from the Hough line detection formula (see the wikipedia page for more).
     # Anyway, the output of this calculations below are a point centered vertically in the middle
     # of the image and to the left or right such that the line goes through it (cx may be off the image).
-    cy = img.height() / 2
-    cx = (line.rho() - (cy * math.sin(math.radians(line.theta())))) / math.cos(math.radians(line.theta()))
+    height, width, layers = img.shape
+    cy = height / 2
+    xslope = line[0] / line[1]
+    xint = line[2]*xslope + line[3]
+    cx = xslope*cy + xint
 
     # "cx_middle" is now the distance from the center of the line. This is our error method to stay
     # on the line. "cx_normal" normalizes the error to something like -1/+1 (it will go over this).
-    cx_middle = cx - (img.width() / 2)
-    cx_normal = cx_middle / (img.width() / 2)
+    cx_middle = cx - (width / 2)
+    cx_normal = cx_middle / (width / 2)
     # Note that "cx_normal" may be larger than -1/+1. When the value is between -1/+1 this means the
     # robot is driving basically straight and needs to only turn lightly left or right. When the value
     # is outside -1/+1 it means you need to turn VERY hard to the left or right to get back on the
@@ -196,11 +199,11 @@ steering_output = STEERING_OFFSET
 
 while True:
     clock.tick()
-    ret, frame = capture.read()
+    ret, img = capture.read()
     if ret:
-        cv2.imwrite('/run/bluedonkey/camera.jpg', frame)
-        mask = cv2.inRange(frame, COLOR_HIGH_LIGHT_THRESHOLDS_MIN, COLOR_HIGH_LIGHT_THRESHOLDS_MAX)
-        res = cv2.bitwise_and(frame, frame, mask=mask)
+        cv2.imwrite('/run/bluedonkey/camera.jpg', img)
+        mask = cv2.inRange(img, COLOR_HIGH_LIGHT_THRESHOLDS_MIN, COLOR_HIGH_LIGHT_THRESHOLDS_MAX)
+        res = cv2.bitwise_and(img, img, mask=mask)
         gray = cv2.cvtColor(res, cv2.COLOR_BGR2GRAY)
         #blur = cv2.GaussianBlur(gray, (7, 7), 0)
         #edges = cv2.Canny(blur, 50, 150)
@@ -219,18 +222,13 @@ while True:
         #pixelpoints = cv2.findNonZero(gray_lines)
         pixelpoints = cv2.findNonZero(gray)
         [vx,vy,x,y] = cv2.fitLine(pixelpoints, 4, 0, 0.01, 0.01)
-        lefty = int((-x*vy/vx) + y)
-        righty = int(((160-x)*vy/vx)+y)
-        res = cv2.line(res, (159,righty), (0,lefty), (0,255,0), 2)
-        m = vy/vx
-        cv2.imwrite('/run/bluedonkey/filtered.jpg', res)
-    time.sleep(0.2)
-    continue
+        line = [vx,vy,x,y]
 
     print_string = ""
-    if line and (line.magnitude() >= MAG_THRESHOLD):
-        img.draw_line(line.line(), color = (127, 127, 127) if COLOR_LINE_FOLLOWING else 127)
-
+    if line:
+        res = cv2.line(res, (x,y), (x+20*vx,y+20*vy), (0,255,0), 2)
+        cv2.imwrite('/run/bluedonkey/filtered.jpg', res)
+        
         new_time = datetime.datetime.now()
         delta_time = (new_time - old_time).microseconds / 1000
         old_time = new_time
