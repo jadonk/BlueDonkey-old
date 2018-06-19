@@ -41,8 +41,8 @@ COLOR_THRESHOLDS = [( 85, 100,  -40,  -10,    0,  127)] # Yellow Line.
 GRAYSCALE_THRESHOLDS = [(240, 255)] # White Line.
 COLOR_HIGH_LIGHT_THRESHOLDS = [(80, 100, -10, 10, -10, 10)]
 # https://pythonprogramming.net/color-filter-python-opencv-tutorial/
-COLOR_HIGH_LIGHT_THRESHOLDS_MAX = numpy.array([75*360/255, 100*2.55, 100*2.55])
-COLOR_HIGH_LIGHT_THRESHOLDS_MIN = numpy.array([50*360/255, 65*2.55, 75*2.55])
+COLOR_HIGH_LIGHT_THRESHOLDS_MAX = numpy.array([255,255,255])
+COLOR_HIGH_LIGHT_THRESHOLDS_MIN = numpy.array([0,180,180])
 GRAYSCALE_HIGH_LIGHT_THRESHOLDS = [(250, 255)]
 #BINARY_VIEW = False # Helps debugging but costs FPS if on.
 DO_NOTHING = False # Just capture frames...
@@ -196,20 +196,36 @@ steering_output = STEERING_OFFSET
 
 while True:
     clock.tick()
-    ret, img = capture.read()
-    img8 = numpy.uint8(img)
-    img_hsv = cv2.cvtColor(img8, cv2.COLOR_BGR2HSV)
-    mask = cv2.inRange(img_hsv, COLOR_HIGH_LIGHT_THRESHOLDS_MIN, COLOR_HIGH_LIGHT_THRESHOLDS_MAX)
-    res = cv2.bitwise_and(img, img, mask=mask)
-    cv2.imwrite("line_follower.jpg", res)
+    ret, frame = capture.read()
+    if ret:
+        cv2.imwrite('/run/bluedonkey/camera.jpg', frame)
+        mask = cv2.inRange(frame, COLOR_HIGH_LIGHT_THRESHOLDS_MIN, COLOR_HIGH_LIGHT_THRESHOLDS_MAX)
+        res = cv2.bitwise_and(frame, frame, mask=mask)
+        gray = cv2.cvtColor(res, cv2.COLOR_BGR2GRAY)
+        #blur = cv2.GaussianBlur(gray, (7, 7), 0)
+        #edges = cv2.Canny(blur, 50, 150)
+        #dilation = cv2.dilate(edges, cv2.getStructuringElement(cv2.MORPH_DILATE, (5, 5)))
+        #erosion = cv2.erode(dilation, cv2.getStructuringElement(cv2.MORPH_ERODE, (3, 3)))
+        #merge = gray + erosion
+        #lines = cv2.HoughLinesP(merge, 2, numpy.pi/180, 12, numpy.array([]), minLineLength=20, maxLineGap=40)
+        #line_img = numpy.zeros((merge.shape[0], merge.shape[1], 3), dtype=numpy.uint8)
+        #for line in lines:
+        #    for x1,y1,x2,y2 in line:
+        #        angle = numpy.arctan2(y2 - y1, x2 - x1) * 180. / numpy.pi
+        #        if ( (abs(angle) > 20.) and (abs(angle) < 90.)):
+        #            cv2.line(line_img, (x1, y1), (x2, y2), (0,0,255), 1)
+        #res = cv2.addWeighted(res, 0.8, line_img, 1, 0)
+        #gray_lines = cv2.cvtColor(line_img, cv2.COLOR_BGR2GRAY)
+        #pixelpoints = cv2.findNonZero(gray_lines)
+        pixelpoints = cv2.findNonZero(gray)
+        [vx,vy,x,y] = cv2.fitLine(pixelpoints, 4, 0, 0.01, 0.01)
+        lefty = int((-x*vy/vx) + y)
+        righty = int(((160-x)*vy/vx)+y)
+        res = cv2.line(res, (159,righty), (0,lefty), (0,255,0), 2)
+        m = vy/vx
+        cv2.imwrite('/run/bluedonkey/filtered.jpg', res)
+    time.sleep(0.2)
     continue
-
-    # We call get regression below to get a robust linear regression of the field of view.
-    # This returns a line object which we can use to steer the robocar.
-    line = img.get_regression(([(50, 100, -128, 127, -128, 127)] if BINARY_VIEW else COLOR_THRESHOLDS) if COLOR_LINE_FOLLOWING \
-        else ([(127, 255)] if BINARY_VIEW else GRAYSCALE_THRESHOLDS), \
-        area_threshold = AREA_THRESHOLD, pixels_threshold = PIXELS_THRESHOLD, \
-        robust = True)
 
     print_string = ""
     if line and (line.magnitude() >= MAG_THRESHOLD):
@@ -261,5 +277,5 @@ while True:
     else:
         print_string = "Line Lost - throttle %d, steering %d" % (throttle_output , steering_output)
 
-    set_servos(throttle_output, steering_output)
+    #set_servos(throttle_output, steering_output)
     print("FPS %f - %s" % (clock.get_fps(), print_string))
