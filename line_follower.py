@@ -80,7 +80,7 @@ STEERING_D_GAIN = -9 # Make this larger as you increase your speed and vice vers
 #THROTTLE_SERVO_MIN_US = 1500
 #THROTTLE_SERVO_MAX_US = 2000
 THROTTLE_SERVO_MIN_US = 0
-THROTTLE_SERVO_MAX_US = 0.01
+THROTTLE_SERVO_MAX_US = 0.005
 
 # Tweak these values for your robocar.
 #STEERING_SERVO_MIN_US = 700

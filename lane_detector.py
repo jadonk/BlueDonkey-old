@@ -23,7 +23,7 @@ def capture_and_process_frame():
     if ret:
         cv2.imwrite('/run/bluedonkey/camera.jpg', frame)
         lower_yellow = numpy.array([0,160,160])
-        upper_yellow = numpy.array([220,255,255])
+        upper_yellow = numpy.array([255,255,255])
         mask = cv2.inRange(frame, lower_yellow, upper_yellow)
         res = cv2.bitwise_and(frame, frame, mask=mask)
         #cv2.rectangle(res, (0,0), (159,119), (0,0,0), 2)
@@ -34,7 +34,7 @@ def capture_and_process_frame():
         dilation = cv2.dilate(edges, cv2.getStructuringElement(cv2.MORPH_DILATE, (5, 5)))
         erosion = cv2.erode(dilation, cv2.getStructuringElement(cv2.MORPH_ERODE, (3, 3)))
         merge = gray + erosion
-        lines = cv2.HoughLinesP(merge, 2, numpy.pi/180, 12, numpy.array([]), minLineLength=20, maxLineGap=40)
+        lines = cv2.HoughLinesP(merge, 2, numpy.pi/180, 12, numpy.array([]), minLineLength=30, maxLineGap=30)
         line_img = numpy.zeros((merge.shape[0], merge.shape[1], 3), dtype=numpy.uint8)
         for line in lines:
             for x1,y1,x2,y2 in line:
@@ -48,7 +48,6 @@ def capture_and_process_frame():
         lefty = int((-x*vy/vx) + y)
         righty = int(((160-x)*vy/vx)+y)
         res = cv2.line(res, (159,righty), (0,lefty), (0,255,0), 2)
-        m = vy/vx
         cv2.imwrite('/run/bluedonkey/filtered.jpg', res)
     
     time.sleep(0.2)
