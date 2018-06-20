@@ -29,21 +29,24 @@ def capture_and_process_frame():
         #cv2.rectangle(res, (0,0), (159,119), (0,0,0), 2)
         #cv2.imwrite('/run/bluedonkey/filtered.jpg', res)
         gray = cv2.cvtColor(res, cv2.COLOR_BGR2GRAY)
-        blur = cv2.GaussianBlur(gray, (7, 7), 0)
-        edges = cv2.Canny(blur, 50, 150)
-        dilation = cv2.dilate(edges, cv2.getStructuringElement(cv2.MORPH_DILATE, (5, 5)))
-        erosion = cv2.erode(dilation, cv2.getStructuringElement(cv2.MORPH_ERODE, (3, 3)))
-        merge = gray + erosion
-        lines = cv2.HoughLinesP(merge, 2, numpy.pi/180, 12, numpy.array([]), minLineLength=30, maxLineGap=30)
-        line_img = numpy.zeros((merge.shape[0], merge.shape[1], 3), dtype=numpy.uint8)
-        for line in lines:
-            for x1,y1,x2,y2 in line:
-                angle = numpy.arctan2(y2 - y1, x2 - x1) * 180. / numpy.pi
-                if ( (abs(angle) > 20.) and (abs(angle) < 90.)):
-                    cv2.line(line_img, (x1, y1), (x2, y2), (0,0,255), 1)
-        res = cv2.addWeighted(res, 0.8, line_img, 1, 0)
-        gray_lines = cv2.cvtColor(line_img, cv2.COLOR_BGR2GRAY)
-        pixelpoints = cv2.findNonZero(gray_lines)
+        if True:
+            blur = cv2.GaussianBlur(gray, (7, 7), 0)
+            #edges = cv2.Canny(blur, 50, 150)
+            dilation = cv2.dilate(blur, cv2.getStructuringElement(cv2.MORPH_DILATE, (5, 5)))
+            erosion = cv2.erode(dilation, cv2.getStructuringElement(cv2.MORPH_ERODE, (3, 3)))
+            #merge = gray + erosion
+            lines = cv2.HoughLinesP(erosion, 2, numpy.pi/180, 9, numpy.array([]), minLineLength=30, maxLineGap=30)
+            line_img = numpy.zeros((res.shape[0], res.shape[1], 3), dtype=numpy.uint8)
+            for line in lines:
+                for x1,y1,x2,y2 in line:
+                    angle = numpy.arctan2(y2 - y1, x2 - x1) * 180. / numpy.pi
+                    if ( (abs(angle) > 20.) and (abs(angle) < 90.)):
+                        cv2.line(line_img, (x1, y1), (x2, y2), (0,0,255), 1)
+            res = cv2.addWeighted(res, 0.8, line_img, 1, 0)
+            gray_lines = cv2.cvtColor(line_img, cv2.COLOR_BGR2GRAY)
+            pixelpoints = cv2.findNonZero(gray_lines)
+        else:
+            pixelpoints = cv2.findNonZero(gray)
         [vx,vy,x,y] = cv2.fitLine(pixelpoints, 4, 0, 0.01, 0.01)
         lefty = int((-x*vy/vx) + y)
         righty = int(((160-x)*vy/vx)+y)

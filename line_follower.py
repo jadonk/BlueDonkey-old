@@ -51,6 +51,9 @@ FRAME_WIDTH = 160
 FRAME_HEIGHT = 120
 FRAME_REGION = 0.75 # Percentage of the image from the bottom (0 - 1.0).
 FRAME_WIDE = 1.0 # Percentage of the frame width.
+ROI_VERTICES = numpy.array([[0,119], [0,60], [70,0], [90,0], [159,60], [159,119]], dtype=numpy.int32)
+ROI_MASK = numpy.zeros((120, 160), numpy.uint8)
+cv2.fillConvexPoly(ROI_MASK, ROI_VERTICES, 255)
 
 AREA_THRESHOLD = 0 # Raise to filter out false detections.
 PIXELS_THRESHOLD = 40 # Raise to filter out false detections.
@@ -80,7 +83,7 @@ STEERING_D_GAIN = -9 # Make this larger as you increase your speed and vice vers
 #THROTTLE_SERVO_MIN_US = 1500
 #THROTTLE_SERVO_MAX_US = 2000
 THROTTLE_SERVO_MIN_US = 0
-THROTTLE_SERVO_MAX_US = 0.005
+THROTTLE_SERVO_MAX_US = 0.05
 
 # Tweak these values for your robocar.
 #STEERING_SERVO_MIN_US = 700
@@ -201,30 +204,37 @@ while True:
     clock.tick()
     ret, img = capture.read()
     if ret:
-        #cv2.imwrite('/run/bluedonkey/camera.jpg', img)
-        mask = cv2.inRange(img, COLOR_HIGH_LIGHT_THRESHOLDS_MIN, COLOR_HIGH_LIGHT_THRESHOLDS_MAX)
-        res = cv2.bitwise_and(img, img, mask=mask)
+        color_mask = cv2.inRange(img, COLOR_HIGH_LIGHT_THRESHOLDS_MIN, COLOR_HIGH_LIGHT_THRESHOLDS_MAX)
+        res = cv2.bitwise_and(img, img, mask=color_mask)
+        
+        img = cv2.bitwise_and(img, img, mask=ROI_MASK)
+        cv2.imwrite('/run/bluedonkey/camera.jpg', img)
+        
+        res = cv2.bitwise_and(res, res, mask=ROI_MASK)
         gray = cv2.cvtColor(res, cv2.COLOR_BGR2GRAY)
-        #blur = cv2.GaussianBlur(gray, (7, 7), 0)
+        blur = cv2.GaussianBlur(gray, (7, 7), 0)
         #edges = cv2.Canny(blur, 50, 150)
-        #dilation = cv2.dilate(edges, cv2.getStructuringElement(cv2.MORPH_DILATE, (5, 5)))
-        #erosion = cv2.erode(dilation, cv2.getStructuringElement(cv2.MORPH_ERODE, (3, 3)))
+        dilation = cv2.dilate(blur, cv2.getStructuringElement(cv2.MORPH_DILATE, (5, 5)))
+        erosion = cv2.erode(dilation, cv2.getStructuringElement(cv2.MORPH_ERODE, (3, 3)))
         #merge = gray + erosion
-        #lines = cv2.HoughLinesP(merge, 2, numpy.pi/180, 12, numpy.array([]), minLineLength=20, maxLineGap=40)
-        #line_img = numpy.zeros((merge.shape[0], merge.shape[1], 3), dtype=numpy.uint8)
-        #for line in lines:
-        #    for x1,y1,x2,y2 in line:
-        #        angle = numpy.arctan2(y2 - y1, x2 - x1) * 180. / numpy.pi
-        #        if ( (abs(angle) > 20.) and (abs(angle) < 90.)):
-        #            cv2.line(line_img, (x1, y1), (x2, y2), (0,0,255), 1)
-        #res = cv2.addWeighted(res, 0.8, line_img, 1, 0)
-        #gray_lines = cv2.cvtColor(line_img, cv2.COLOR_BGR2GRAY)
-        #pixelpoints = cv2.findNonZero(gray_lines)
-        pixelpoints = cv2.findNonZero(gray)
-        try:
-            [vx,vy,x,y] = cv2.fitLine(pixelpoints, 4, 0, 0.01, 0.01)
-            line = [vx,vy,x,y]
-        except:
+        lines = cv2.HoughLinesP(erosion, 2, numpy.pi/180, 12, numpy.array([]), minLineLength=20, maxLineGap=40)
+        if lines.any():
+            line_img = numpy.zeros((res.shape[0], res.shape[1], 3), dtype=numpy.uint8)
+            for line in lines:
+                for x1,y1,x2,y2 in line:
+                    angle = numpy.arctan2(y2 - y1, x2 - x1) * 180. / numpy.pi
+                    if ( (abs(angle) > 20.) and (abs(angle) < 90.)):
+                        cv2.line(line_img, (x1, y1), (x2, y2), (0,0,255), 1)
+            res = cv2.addWeighted(res, 0.8, line_img, 1, 0)
+            gray_lines = cv2.cvtColor(line_img, cv2.COLOR_BGR2GRAY)
+            pixelpoints = cv2.findNonZero(gray_lines)
+            #pixelpoints = cv2.findNonZero(gray)
+            try:
+                [vx,vy,x,y] = cv2.fitLine(pixelpoints, 4, 0, 0.01, 0.01)
+                line = [vx,vy,x,y]
+            except:
+                line = False
+        else:
             line = False
 
     print_string = ""
@@ -233,7 +243,7 @@ while True:
         righty = int(((160-x)*vy/vx)+y)
         res = cv2.line(res, (159,righty), (0,lefty), (0,255,0), 2)
         #res = cv2.line(res, (x,y), (x+20*vx,y+20*vy), (0,255,0), 2)
-        #cv2.imwrite('/run/bluedonkey/filtered.jpg', res)
+        cv2.imwrite('/run/bluedonkey/filtered.jpg', res)
         
         new_time = datetime.datetime.now()
         delta_time = (new_time - old_time).microseconds / 1000
