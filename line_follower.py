@@ -178,6 +178,8 @@ capture = cv2.VideoCapture(0)
 capture.set(cv2.CAP_PROP_FPS, 10)
 capture.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH)
 capture.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
+capture.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
+capture.set(cv2.CAP_PROP_EXPOSURE, 0.003)
 
 #sensor.set_vflip(True)
 #sensor.set_hmirror(True)
@@ -207,7 +209,7 @@ while True:
         color_mask = cv2.inRange(img, COLOR_HIGH_LIGHT_THRESHOLDS_MIN, COLOR_HIGH_LIGHT_THRESHOLDS_MAX)
         res = cv2.bitwise_and(img, img, mask=color_mask)
         
-        img = cv2.bitwise_and(img, img, mask=ROI_MASK)
+        #img = cv2.bitwise_and(img, img, mask=ROI_MASK)
         cv2.imwrite('/run/bluedonkey/camera.jpg', img)
         
         res = cv2.bitwise_and(res, res, mask=ROI_MASK)
@@ -218,7 +220,7 @@ while True:
         erosion = cv2.erode(dilation, cv2.getStructuringElement(cv2.MORPH_ERODE, (3, 3)))
         #merge = gray + erosion
         lines = cv2.HoughLinesP(erosion, 2, numpy.pi/180, 12, numpy.array([]), minLineLength=20, maxLineGap=40)
-        if lines.any():
+        if lines is not None:
             line_img = numpy.zeros((res.shape[0], res.shape[1], 3), dtype=numpy.uint8)
             for line in lines:
                 for x1,y1,x2,y2 in line:
