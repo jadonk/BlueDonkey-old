@@ -127,11 +127,12 @@ def figure_out_my_steering(line, img):
     # Anyway, the output of this calculations below are a point centered vertically in the middle
     # of the image and to the left or right such that the line goes through it (cx may be off the image).
     height, width, layers = img.shape
-    cy = height / 2
-    xslope = line[0] / line[1]
-    xint = xslope*line[3] - line[2]
-    cx = xslope*cy + xint
-    print(xint, end="")
+    #cy = height / 2
+    #xslope = line[0] / line[1]
+    #xint =  line[2] - xslope*line[3]
+    #cx = xslope*cy + xint
+    cx = line[2]
+    #print(cx, end="")
 
     # "cx_middle" is now the distance from the center of the line. This is our error method to stay
     # on the line. "cx_normal" normalizes the error to something like -1/+1 (it will go over this).
@@ -180,7 +181,7 @@ capture.set(cv2.CAP_PROP_FPS, 10)
 capture.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH)
 capture.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
 capture.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
-capture.set(cv2.CAP_PROP_EXPOSURE, 0.003)
+capture.set(cv2.CAP_PROP_EXPOSURE, 0.0005)
 
 #sensor.set_vflip(True)
 #sensor.set_hmirror(True)
