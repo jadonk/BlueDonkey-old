@@ -5,7 +5,7 @@ if not os.geteuid() == 0:
 if sys.version_info < (3,0):
     sys.exit("\nPlease run under python3.\n")
 
-import cv2, rcpy, datetime, time, numpy, pygame
+import cv2, rcpy, datetime, time, numpy, pygame, threading
 
 # Enable steering servo
 from rcpy.servo import servo1
@@ -178,11 +178,26 @@ def set_servos(throttle, steering):
 #
 
 capture = cv2.VideoCapture(0)
-capture.set(cv2.CAP_PROP_FPS, 30)
+capture.set(cv2.CAP_PROP_FPS, 10)
 capture.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH)
 capture.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
 capture.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
 capture.set(cv2.CAP_PROP_EXPOSURE, 0.000005)
+
+class cameraThread(threading.Thread):
+    def run(self):
+        frame = numpy.zeros((120, 160, 3), dtype=numpy.uint8)
+        while True:            
+            ret, frametmp = capure.read()
+            if ret:
+                frame = frametmp
+            k = cv2.waitKey(5) & 0xFF
+            if k == ord('q'):
+                break
+
+thread = cameraThread()
+thread.start()
+threads.append(thread)
 
 #sensor.set_vflip(True)
 #sensor.set_hmirror(True)
@@ -207,12 +222,12 @@ steering_output = STEERING_OFFSET
 
 while True:
     clock.tick()
-    ret, img = capture.read()
-    if ret:
-        color_mask = cv2.inRange(img, COLOR_HIGH_LIGHT_THRESHOLDS_MIN, COLOR_HIGH_LIGHT_THRESHOLDS_MAX)
-        res = cv2.bitwise_and(img, img, mask=color_mask)
+    #ret, frame = capture.read()
+    if True:
+        color_mask = cv2.inRange(frame, COLOR_HIGH_LIGHT_THRESHOLDS_MIN, COLOR_HIGH_LIGHT_THRESHOLDS_MAX)
+        res = cv2.bitwise_and(frame, frame, mask=color_mask)
         
-        #img = cv2.bitwise_and(img, img, mask=ROI_MASK)
+        #img = cv2.bitwise_and(frame, frame, mask=ROI_MASK)
         
         res = cv2.bitwise_and(res, res, mask=ROI_MASK)
         gray = cv2.cvtColor(res, cv2.COLOR_BGR2GRAY)
@@ -296,6 +311,6 @@ while True:
         print_string = "Line Lost - throttle %03d, steering %03d" % (throttle_output , steering_output)
 
     set_servos(throttle_output, steering_output)
-    #cv2.imwrite('/run/bluedonkey/camera.jpg', img)
+    #cv2.imwrite('/run/bluedonkey/camera.jpg', frame)
     #cv2.imwrite('/run/bluedonkey/filtered.jpg', res)
     print("FPS %02.2f - %s\r" % (clock.get_fps(), print_string), end="")
