@@ -51,7 +51,7 @@ FRAME_WIDTH = 160
 FRAME_HEIGHT = 120
 FRAME_REGION = 0.75 # Percentage of the image from the bottom (0 - 1.0).
 FRAME_WIDE = 1.0 # Percentage of the frame width.
-ROI_VERTICES = numpy.array([[0,119], [0,60], [70,0], [90,0], [159,60], [159,119]], dtype=numpy.int32)
+ROI_VERTICES = numpy.array([[0,119], [0,90], [70,20], [90,20], [159,90], [159,119]], dtype=numpy.int32)
 ROI_MASK = numpy.zeros((120, 160), numpy.uint8)
 cv2.fillConvexPoly(ROI_MASK, ROI_VERTICES, 255)
 
@@ -83,13 +83,13 @@ STEERING_D_GAIN = -9 # Make this larger as you increase your speed and vice vers
 #THROTTLE_SERVO_MIN_US = 1500
 #THROTTLE_SERVO_MAX_US = 2000
 THROTTLE_SERVO_MIN_US = 0
-THROTTLE_SERVO_MAX_US = 0.3
+THROTTLE_SERVO_MAX_US = 0.4
 
 # Tweak these values for your robocar.
 #STEERING_SERVO_MIN_US = 700
 #STEERING_SERVO_MAX_US = 2300
-STEERING_SERVO_MIN_US = -0.4
-STEERING_SERVO_MAX_US = 0.4
+STEERING_SERVO_MIN_US = -1
+STEERING_SERVO_MAX_US = 1
 
 ###########
 # Setup
@@ -127,10 +127,10 @@ def figure_out_my_steering(line, img):
     # Anyway, the output of this calculations below are a point centered vertically in the middle
     # of the image and to the left or right such that the line goes through it (cx may be off the image).
     height, width, layers = img.shape
-    #cy = height / 2
+    cy = height / 2
     xslope = line[0] / line[1]
-    cx =  line[2] - xslope*line[3]
-    #cx = xslope*cy + xint
+    xint =  line[2] - xslope*line[3]
+    cx = xslope*cy + xint
     #cx = line[2]
     #print(cx, end="")
 
@@ -178,7 +178,7 @@ def set_servos(throttle, steering):
 #
 
 capture = cv2.VideoCapture(0)
-capture.set(cv2.CAP_PROP_FPS, 10)
+capture.set(cv2.CAP_PROP_FPS, 30)
 capture.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH)
 capture.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
 capture.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
@@ -213,15 +213,14 @@ while True:
         res = cv2.bitwise_and(img, img, mask=color_mask)
         
         #img = cv2.bitwise_and(img, img, mask=ROI_MASK)
-        cv2.imwrite('/run/bluedonkey/camera.jpg', img)
         
         res = cv2.bitwise_and(res, res, mask=ROI_MASK)
         gray = cv2.cvtColor(res, cv2.COLOR_BGR2GRAY)
         blur = cv2.GaussianBlur(gray, (7, 7), 0)
         edges = cv2.Canny(blur, 50, 150)
-        erosion = cv2.erode(blur, cv2.getStructuringElement(cv2.MORPH_ERODE, (5, 5)))
-        #detect = cv2.dilate(erosion, cv2.getStructuringElement(cv2.MORPH_DILATE, (5, 5)))
-        detect = edges + erosion
+        dilation = cv2.dilate(edges, cv2.getStructuringElement(cv2.MORPH_DILATE, (5, 5)))
+        erosion = cv2.erode(dilation, cv2.getStructuringElement(cv2.MORPH_ERODE, (3, 3)))
+        detect = blur + erosion
         lines = cv2.HoughLinesP(detect, 2, numpy.pi/180, 20, numpy.array([]), minLineLength=30, maxLineGap=30)
         if lines is not None:
             line_img = numpy.zeros((res.shape[0], res.shape[1], 3), dtype=numpy.uint8)
@@ -248,7 +247,6 @@ while True:
         righty = int(((160-x)*vy/vx)+y)
         res = cv2.line(res, (159,righty), (0,lefty), (0,255,0), 2)
         #res = cv2.line(res, (x,y), (x+20*vx,y+20*vy), (0,255,0), 2)
-        cv2.imwrite('/run/bluedonkey/filtered.jpg', res)
         
         new_time = datetime.datetime.now()
         delta_time = (new_time - old_time).microseconds / 1000
@@ -290,12 +288,14 @@ while True:
         # Throttle goes from 0% to 100%.
         throttle_output = max(min(throttle_pid_output, 100), 0)
 
-        print_string = "Line Ok   - throttle %d, steering %d" % \
+        print_string = "Line Ok   - throttle %03d, steering %03d" % \
             (throttle_output , steering_output)
 
     else:
         throttle_output = throttle_output * 0.5
-        print_string = "Line Lost - throttle %3d, steering %3d" % (throttle_output , steering_output)
+        print_string = "Line Lost - throttle %03d, steering %03d" % (throttle_output , steering_output)
 
     set_servos(throttle_output, steering_output)
-    print("FPS %2.2f - %s\r" % (clock.get_fps(), print_string), end="")
+    #cv2.imwrite('/run/bluedonkey/camera.jpg', img)
+    #cv2.imwrite('/run/bluedonkey/filtered.jpg', res)
+    print("FPS %02.2f - %s\r" % (clock.get_fps(), print_string), end="")
