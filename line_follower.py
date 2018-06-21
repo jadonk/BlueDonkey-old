@@ -11,7 +11,7 @@ import cv2, rcpy, datetime, time, numpy, pygame
 from rcpy.servo import servo1
 rcpy.servo.enable()
 servo1.set(0)
-servo1clk = rcpy.clock.Clock(servo1, 0.05)
+servo1clk = rcpy.clock.Clock(servo1, 0.02)
 servo1clk.start()
 
 # Enable throttle
@@ -42,7 +42,7 @@ GRAYSCALE_THRESHOLDS = [(240, 255)] # White Line.
 COLOR_HIGH_LIGHT_THRESHOLDS = [(80, 100, -10, 10, -10, 10)]
 # https://pythonprogramming.net/color-filter-python-opencv-tutorial/
 COLOR_HIGH_LIGHT_THRESHOLDS_MAX = numpy.array([255,255,255])
-COLOR_HIGH_LIGHT_THRESHOLDS_MIN = numpy.array([0,180,180])
+COLOR_HIGH_LIGHT_THRESHOLDS_MIN = numpy.array([0,220,220])
 GRAYSCALE_HIGH_LIGHT_THRESHOLDS = [(250, 255)]
 #BINARY_VIEW = False # Helps debugging but costs FPS if on.
 DO_NOTHING = False # Just capture frames...
@@ -83,7 +83,7 @@ STEERING_D_GAIN = -9 # Make this larger as you increase your speed and vice vers
 #THROTTLE_SERVO_MIN_US = 1500
 #THROTTLE_SERVO_MAX_US = 2000
 THROTTLE_SERVO_MIN_US = 0
-THROTTLE_SERVO_MAX_US = 0.05
+THROTTLE_SERVO_MAX_US = 0.3
 
 # Tweak these values for your robocar.
 #STEERING_SERVO_MIN_US = 700
@@ -128,10 +128,10 @@ def figure_out_my_steering(line, img):
     # of the image and to the left or right such that the line goes through it (cx may be off the image).
     height, width, layers = img.shape
     #cy = height / 2
-    #xslope = line[0] / line[1]
-    #xint =  line[2] - xslope*line[3]
+    xslope = line[0] / line[1]
+    cx =  line[2] - xslope*line[3]
     #cx = xslope*cy + xint
-    cx = line[2]
+    #cx = line[2]
     #print(cx, end="")
 
     # "cx_middle" is now the distance from the center of the line. This is our error method to stay
@@ -167,8 +167,9 @@ def figure_out_my_throttle(steering): # steering -> [0:180]
 # throttle [0:100] (101 values) -> [THROTTLE_SERVO_MIN_US, THROTTLE_SERVO_MAX_US]
 # steering [0:180] (181 values) -> [STEERING_SERVO_MIN_US, STEERING_SERVO_MAX_US]
 def set_servos(throttle, steering):
-    throttle = THROTTLE_SERVO_MIN_US + ((throttle * (THROTTLE_SERVO_MAX_US - THROTTLE_SERVO_MIN_US + 1)) / 101)
-    steering = STEERING_SERVO_MIN_US + ((steering * (STEERING_SERVO_MAX_US - STEERING_SERVO_MIN_US + 1)) / 181)
+    throttle = THROTTLE_SERVO_MIN_US + ((throttle/100) * (THROTTLE_SERVO_MAX_US - THROTTLE_SERVO_MIN_US))
+    steering = STEERING_SERVO_MIN_US + ((steering/180) * (STEERING_SERVO_MAX_US - STEERING_SERVO_MIN_US))
+    #print(steering, end="")
     servo3.set(throttle)
     servo1.set(steering)
 
@@ -181,7 +182,7 @@ capture.set(cv2.CAP_PROP_FPS, 10)
 capture.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH)
 capture.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
 capture.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
-capture.set(cv2.CAP_PROP_EXPOSURE, 0.0005)
+capture.set(cv2.CAP_PROP_EXPOSURE, 0.000005)
 
 #sensor.set_vflip(True)
 #sensor.set_hmirror(True)
@@ -217,11 +218,11 @@ while True:
         res = cv2.bitwise_and(res, res, mask=ROI_MASK)
         gray = cv2.cvtColor(res, cv2.COLOR_BGR2GRAY)
         blur = cv2.GaussianBlur(gray, (7, 7), 0)
-        #edges = cv2.Canny(blur, 50, 150)
-        dilation = cv2.dilate(blur, cv2.getStructuringElement(cv2.MORPH_DILATE, (5, 5)))
-        erosion = cv2.erode(dilation, cv2.getStructuringElement(cv2.MORPH_ERODE, (3, 3)))
-        #merge = gray + erosion
-        lines = cv2.HoughLinesP(erosion, 2, numpy.pi/180, 12, numpy.array([]), minLineLength=20, maxLineGap=40)
+        edges = cv2.Canny(blur, 50, 150)
+        erosion = cv2.erode(blur, cv2.getStructuringElement(cv2.MORPH_ERODE, (5, 5)))
+        #detect = cv2.dilate(erosion, cv2.getStructuringElement(cv2.MORPH_DILATE, (5, 5)))
+        detect = edges + erosion
+        lines = cv2.HoughLinesP(detect, 2, numpy.pi/180, 20, numpy.array([]), minLineLength=30, maxLineGap=30)
         if lines is not None:
             line_img = numpy.zeros((res.shape[0], res.shape[1], 3), dtype=numpy.uint8)
             for line in lines:
@@ -293,7 +294,8 @@ while True:
             (throttle_output , steering_output)
 
     else:
-        print_string = "Line Lost - throttle %d, steering %d" % (throttle_output , steering_output)
+        throttle_output = throttle_output * 0.5
+        print_string = "Line Lost - throttle %3d, steering %3d" % (throttle_output , steering_output)
 
     set_servos(throttle_output, steering_output)
-    print("FPS %f - %s\r" % (clock.get_fps(), print_string), end="")
+    print("FPS %2.2f - %s\r" % (clock.get_fps(), print_string), end="")
