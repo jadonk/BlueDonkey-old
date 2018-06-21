@@ -64,7 +64,7 @@ MIXING_RATE = 0.9 # Percentage of a new line detection to mix into current steer
 THROTTLE_CUT_OFF_ANGLE = 1.0 # Maximum angular distance from 90 before we cut speed [0.0-90.0).
 THROTTLE_CUT_OFF_RATE = 0.5 # How much to cut our speed boost (below) once the above is passed (0.0-1.0].
 THROTTLE_GAIN = 0.0 # e.g. how much to speed up on a straight away
-THROTTLE_OFFSET = 24.0 # e.g. default speed (0 to 100)
+THROTTLE_OFFSET = 75.0 # e.g. default speed (0 to 100)
 THROTTLE_P_GAIN = 1.0
 THROTTLE_I_GAIN = 0.0
 THROTTLE_I_MIN = -0.0
@@ -83,7 +83,7 @@ STEERING_D_GAIN = -9 # Make this larger as you increase your speed and vice vers
 #THROTTLE_SERVO_MIN_US = 1500
 #THROTTLE_SERVO_MAX_US = 2000
 THROTTLE_SERVO_MIN_US = 0
-THROTTLE_SERVO_MAX_US = 0.4
+THROTTLE_SERVO_MAX_US = 0.1
 
 # Tweak these values for your robocar.
 #STEERING_SERVO_MIN_US = 700
@@ -183,12 +183,13 @@ capture.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH)
 capture.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
 capture.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
 capture.set(cv2.CAP_PROP_EXPOSURE, 0.000005)
+frame = numpy.zeros((120, 160, 3), dtype=numpy.uint8)
 
 class cameraThread(threading.Thread):
     def run(self):
-        frame = numpy.zeros((120, 160, 3), dtype=numpy.uint8)
+        global frame
         while True:            
-            ret, frametmp = capure.read()
+            ret, frametmp = capture.read()
             if ret:
                 frame = frametmp
             k = cv2.waitKey(5) & 0xFF
@@ -197,7 +198,6 @@ class cameraThread(threading.Thread):
 
 thread = cameraThread()
 thread.start()
-threads.append(thread)
 
 #sensor.set_vflip(True)
 #sensor.set_hmirror(True)
@@ -271,7 +271,7 @@ while True:
         # Figure out steering and do steering PID
         #
 
-        steering_new_result = figure_out_my_steering(line, img)
+        steering_new_result = figure_out_my_steering(line, frame)
         steering_delta_result = (steering_new_result - steering_old_result) if (steering_old_result != None) else 0
         steering_old_result = steering_new_result
 
@@ -307,7 +307,7 @@ while True:
             (throttle_output , steering_output)
 
     else:
-        throttle_output = throttle_output * 0.5
+        throttle_output = throttle_output * 0.999
         print_string = "Line Lost - throttle %03d, steering %03d" % (throttle_output , steering_output)
 
     set_servos(throttle_output, steering_output)
