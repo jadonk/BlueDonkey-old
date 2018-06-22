@@ -43,7 +43,7 @@ COLOR_HIGH_LIGHT_THRESHOLDS_MAX = numpy.array([255,255,255])
 COLOR_HIGH_LIGHT_THRESHOLDS_MIN = numpy.array([100,50,50])
 FRAME_EXPOSURE = 0.0001
 GRAYSCALE_HIGH_LIGHT_THRESHOLDS = [(250, 255)]
-BINARY_VIEW = True # Helps debugging but costs FPS if on.
+BINARY_VIEW = False # Helps debugging but costs FPS if on.
 DO_NOTHING = False # Just capture frames...
 #FRAME_SIZE = sensor.QQVGA # Frame size.
 FRAME_WIDTH = 160
@@ -60,10 +60,10 @@ MAG_THRESHOLD = 4 # Raise to filter out false detections.
 MIXING_RATE = 0.9 # Percentage of a new line detection to mix into current steering.
 
 # Tweak these values for your robocar.
-THROTTLE_CUT_OFF_ANGLE = 1.0 # Maximum angular distance from 90 before we cut speed [0.0-90.0).
+THROTTLE_CUT_OFF_ANGLE = 3.0 # Maximum angular distance from 90 before we cut speed [0.0-90.0).
 THROTTLE_CUT_OFF_RATE = 0.2 # How much to cut our speed boost (below) once the above is passed (0.0-1.0].
 THROTTLE_GAIN = 0.0 # e.g. how much to speed up on a straight away
-THROTTLE_OFFSET = 80.0 # e.g. default speed (0 to 100)
+THROTTLE_OFFSET = 90.0 # e.g. default speed (0 to 100)
 THROTTLE_P_GAIN = 1.0
 THROTTLE_I_GAIN = 0.0
 THROTTLE_I_MIN = -0.0
@@ -82,7 +82,7 @@ STEERING_D_GAIN = -9 # Make this larger as you increase your speed and vice vers
 #THROTTLE_SERVO_MIN_US = 1500
 #THROTTLE_SERVO_MAX_US = 2000
 THROTTLE_SERVO_MIN_US = 0
-THROTTLE_SERVO_MAX_US = 0.08
+THROTTLE_SERVO_MAX_US = 0.1
 
 # Tweak these values for your robocar.
 #STEERING_SERVO_MIN_US = 700
@@ -277,7 +277,7 @@ while True:
                               (STEERING_D_GAIN * steering_d_output)
 
         # Steering goes from [-90,90] but we need to output [0,180] for the servos.
-        steering_output = STEERING_OFFSET + max(min(steering_pid_output, 180 - STEERING_OFFSET), STEERING_OFFSET - 180)
+        steering_output = (STEERING_OFFSET + steering_pid_output) % 180
 
         #
         # Figure out throttle and do throttle PID
