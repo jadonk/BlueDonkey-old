@@ -1,3 +1,5 @@
+Moving this to https://github.com/jadonk/BlueDonkey
+
 Switched to Buster now, so all this needs updating.
 
 Some useful links:
