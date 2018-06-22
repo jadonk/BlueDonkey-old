@@ -67,7 +67,9 @@ EOF
 
 # Buster
 
-* https://rcn-ee.net/rootfs/bb.org/testing/2018-06-04/buster-iot/bone-debian-buster-iot-armhf-2018-06-04-4gb.img.xz
+* https://debian.beagleboard.org/images/bone-debian-buster-iot-armhf-2018-06-17-4gb.img.xz
+
+Add python3-pygame from sid.
 
 ```sh
 sudo apt-get update
