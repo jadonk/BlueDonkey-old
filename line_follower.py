@@ -5,7 +5,7 @@ if not os.geteuid() == 0:
 if sys.version_info < (3,0):
     sys.exit("\nPlease run under python3.\n")
 
-import cv2, rcpy, datetime, time, numpy, pygame, threading
+import cv2, rcpy, datetime, time, numpy, pygame, threading, math
 
 # Enable steering servo
 from rcpy.servo import servo1
@@ -30,8 +30,6 @@ servo3.set(0)
 # Copyright (c) 2013-2017 Ibrahim Abdelkader <iabdalkader@openmv.io> & Kwabena W. Agyeman <kwagyeman@openmv.io>
 # This work is licensed under the MIT license, see the file LICENSE for details.
 
-import math
-
 ###########
 # Settings
 ###########
@@ -42,9 +40,10 @@ GRAYSCALE_THRESHOLDS = [(240, 255)] # White Line.
 COLOR_HIGH_LIGHT_THRESHOLDS = [(80, 100, -10, 10, -10, 10)]
 # https://pythonprogramming.net/color-filter-python-opencv-tutorial/
 COLOR_HIGH_LIGHT_THRESHOLDS_MAX = numpy.array([255,255,255])
-COLOR_HIGH_LIGHT_THRESHOLDS_MIN = numpy.array([0,220,220])
+COLOR_HIGH_LIGHT_THRESHOLDS_MIN = numpy.array([100,50,50])
+FRAME_EXPOSURE = 0.0001
 GRAYSCALE_HIGH_LIGHT_THRESHOLDS = [(250, 255)]
-#BINARY_VIEW = False # Helps debugging but costs FPS if on.
+BINARY_VIEW = True # Helps debugging but costs FPS if on.
 DO_NOTHING = False # Just capture frames...
 #FRAME_SIZE = sensor.QQVGA # Frame size.
 FRAME_WIDTH = 160
@@ -62,9 +61,9 @@ MIXING_RATE = 0.9 # Percentage of a new line detection to mix into current steer
 
 # Tweak these values for your robocar.
 THROTTLE_CUT_OFF_ANGLE = 1.0 # Maximum angular distance from 90 before we cut speed [0.0-90.0).
-THROTTLE_CUT_OFF_RATE = 0.5 # How much to cut our speed boost (below) once the above is passed (0.0-1.0].
+THROTTLE_CUT_OFF_RATE = 0.2 # How much to cut our speed boost (below) once the above is passed (0.0-1.0].
 THROTTLE_GAIN = 0.0 # e.g. how much to speed up on a straight away
-THROTTLE_OFFSET = 75.0 # e.g. default speed (0 to 100)
+THROTTLE_OFFSET = 80.0 # e.g. default speed (0 to 100)
 THROTTLE_P_GAIN = 1.0
 THROTTLE_I_GAIN = 0.0
 THROTTLE_I_MIN = -0.0
@@ -83,7 +82,7 @@ STEERING_D_GAIN = -9 # Make this larger as you increase your speed and vice vers
 #THROTTLE_SERVO_MIN_US = 1500
 #THROTTLE_SERVO_MAX_US = 2000
 THROTTLE_SERVO_MIN_US = 0
-THROTTLE_SERVO_MAX_US = 0.1
+THROTTLE_SERVO_MAX_US = 0.08
 
 # Tweak these values for your robocar.
 #STEERING_SERVO_MIN_US = 700
@@ -182,7 +181,7 @@ capture.set(cv2.CAP_PROP_FPS, 10)
 capture.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH)
 capture.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
 capture.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
-capture.set(cv2.CAP_PROP_EXPOSURE, 0.000005)
+capture.set(cv2.CAP_PROP_EXPOSURE, FRAME_EXPOSURE)
 frame = numpy.zeros((120, 160, 3), dtype=numpy.uint8)
 
 class cameraThread(threading.Thread):
@@ -199,11 +198,6 @@ class cameraThread(threading.Thread):
 thread = cameraThread()
 thread.start()
 
-#sensor.set_vflip(True)
-#sensor.set_hmirror(True)
-#sensor.set_windowing((int((sensor.width() / 2) - ((sensor.width() / 2) * FRAME_WIDE)), int(sensor.height() * (1.0 - FRAME_REGION)), \
-#                     int((sensor.width() / 2) + ((sensor.width() / 2) * FRAME_WIDE)), int(sensor.height() * FRAME_REGION)))
-#sensor.skip_frames(time = 200)
 clock = pygame.time.Clock()
 
 ###########
@@ -226,17 +220,14 @@ while True:
     if True:
         color_mask = cv2.inRange(frame, COLOR_HIGH_LIGHT_THRESHOLDS_MIN, COLOR_HIGH_LIGHT_THRESHOLDS_MAX)
         res = cv2.bitwise_and(frame, frame, mask=color_mask)
-        
-        #img = cv2.bitwise_and(frame, frame, mask=ROI_MASK)
-        
         res = cv2.bitwise_and(res, res, mask=ROI_MASK)
         gray = cv2.cvtColor(res, cv2.COLOR_BGR2GRAY)
         blur = cv2.GaussianBlur(gray, (7, 7), 0)
         edges = cv2.Canny(blur, 50, 150)
         dilation = cv2.dilate(edges, cv2.getStructuringElement(cv2.MORPH_DILATE, (5, 5)))
-        erosion = cv2.erode(dilation, cv2.getStructuringElement(cv2.MORPH_ERODE, (3, 3)))
-        detect = blur + erosion
-        lines = cv2.HoughLinesP(detect, 2, numpy.pi/180, 20, numpy.array([]), minLineLength=30, maxLineGap=30)
+        res_gray = cv2.erode(dilation, cv2.getStructuringElement(cv2.MORPH_ERODE, (3, 3)))
+        #res_gray = blur + erosion
+        lines = cv2.HoughLinesP(res_gray, 2, numpy.pi/180, 20, numpy.array([]), minLineLength=30, maxLineGap=30)
         if lines is not None:
             line_img = numpy.zeros((res.shape[0], res.shape[1], 3), dtype=numpy.uint8)
             for line in lines:
@@ -244,14 +235,18 @@ while True:
                     angle = numpy.arctan2(y2 - y1, x2 - x1) * 180. / numpy.pi
                     if ( (abs(angle) > 20.) and (abs(angle) < 90.)):
                         cv2.line(line_img, (x1, y1), (x2, y2), (0,0,255), 1)
+            res = cv2.cvtColor(res_gray, cv2.COLOR_GRAY2BGR)
             res = cv2.addWeighted(res, 0.8, line_img, 1, 0)
             gray_lines = cv2.cvtColor(line_img, cv2.COLOR_BGR2GRAY)
             pixelpoints = cv2.findNonZero(gray_lines)
-            #pixelpoints = cv2.findNonZero(gray)
-            try:
-                [vx,vy,x,y] = cv2.fitLine(pixelpoints, 4, 0, 0.01, 0.01)
-                line = [vx,vy,x,y]
-            except:
+            if pixelpoints is not None:
+                try:
+                    [vx,vy,x,y] = cv2.fitLine(pixelpoints, 4, 0, 0.01, 0.01)
+                    line = [vx,vy,x,y]
+                except:
+                    line = False
+                    pass
+            else:
                 line = False
         else:
             line = False
@@ -261,8 +256,7 @@ while True:
         lefty = int((-x*vy/vx) + y)
         righty = int(((160-x)*vy/vx)+y)
         res = cv2.line(res, (159,righty), (0,lefty), (0,255,0), 2)
-        #res = cv2.line(res, (x,y), (x+20*vx,y+20*vy), (0,255,0), 2)
-        
+
         new_time = datetime.datetime.now()
         delta_time = (new_time - old_time).microseconds / 1000
         old_time = new_time
@@ -307,10 +301,11 @@ while True:
             (throttle_output , steering_output)
 
     else:
-        throttle_output = throttle_output * 0.999
+        throttle_output = throttle_output * 0.9999
         print_string = "Line Lost - throttle %03d, steering %03d" % (throttle_output , steering_output)
 
     set_servos(throttle_output, steering_output)
-    #cv2.imwrite('/run/bluedonkey/camera.jpg', frame)
-    #cv2.imwrite('/run/bluedonkey/filtered.jpg', res)
+    if BINARY_VIEW:
+        cv2.imwrite('/run/bluedonkey/camera.jpg', frame)
+        cv2.imwrite('/run/bluedonkey/filtered.jpg', res)
     print("FPS %02.2f - %s\r" % (clock.get_fps(), print_string), end="")
