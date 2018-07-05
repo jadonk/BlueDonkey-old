@@ -40,10 +40,14 @@ GRAYSCALE_THRESHOLDS = [(240, 255)] # White Line.
 COLOR_HIGH_LIGHT_THRESHOLDS = [(80, 100, -10, 10, -10, 10)]
 # https://pythonprogramming.net/color-filter-python-opencv-tutorial/
 COLOR_HIGH_LIGHT_THRESHOLDS_MAX = numpy.array([255,255,255])
-COLOR_HIGH_LIGHT_THRESHOLDS_MIN = numpy.array([100,50,50])
-FRAME_EXPOSURE = 0.0001
+COLOR_HIGH_LIGHT_THRESHOLDS_MIN = numpy.array([230,230,230])
+#COLOR_HIGH_LIGHT_THRESHOLDS_MAX = numpy.array([255,190,50])
+#COLOR_HIGH_LIGHT_THRESHOLDS_MIN = numpy.array([170,0,0])
+#FRAME_EXPOSURE = 0.000001
+FRAME_EXPOSURE = 0
 GRAYSCALE_HIGH_LIGHT_THRESHOLDS = [(250, 255)]
 BINARY_VIEW = False # Helps debugging but costs FPS if on.
+#BINARY_VIEW = True # Helps debugging but costs FPS if on.
 DO_NOTHING = False # Just capture frames...
 #FRAME_SIZE = sensor.QQVGA # Frame size.
 FRAME_WIDTH = 160
@@ -72,11 +76,11 @@ THROTTLE_D_GAIN = 0.0
 
 # Tweak these values for your robocar.
 STEERING_OFFSET = 90 # Change this if you need to fix an imbalance in your car (0 to 180).
-STEERING_P_GAIN = -40.0 # Make this smaller as you increase your speed and vice versa.
+STEERING_P_GAIN = 1.5 # Make this smaller as you increase your speed and vice versa.
 STEERING_I_GAIN = 0.0
 STEERING_I_MIN = -0.0
 STEERING_I_MAX = 0.0
-STEERING_D_GAIN = -9 # Make this larger as you increase your speed and vice versa.
+STEERING_D_GAIN = 0.4 # Make this larger as you increase your speed and vice versa.
 
 # Tweak these values for your robocar.
 #THROTTLE_SERVO_MIN_US = 1500
@@ -87,8 +91,8 @@ THROTTLE_SERVO_MAX_US = 0.1
 # Tweak these values for your robocar.
 #STEERING_SERVO_MIN_US = 700
 #STEERING_SERVO_MAX_US = 2300
-STEERING_SERVO_MIN_US = -1
-STEERING_SERVO_MAX_US = 1
+STEERING_SERVO_MIN_US = -1.5
+STEERING_SERVO_MAX_US = 1.5
 
 ###########
 # Setup
@@ -126,7 +130,7 @@ def figure_out_my_steering(line, img):
     # Anyway, the output of this calculations below are a point centered vertically in the middle
     # of the image and to the left or right such that the line goes through it (cx may be off the image).
     height, width, layers = img.shape
-    cy = height / 2
+    cy = height * 3 / 4
     xslope = line[0] / line[1]
     xint =  line[2] - xslope*line[3]
     cx = xslope*cy + xint
@@ -180,8 +184,9 @@ capture = cv2.VideoCapture(0)
 capture.set(cv2.CAP_PROP_FPS, 10)
 capture.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH)
 capture.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
-capture.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
-capture.set(cv2.CAP_PROP_EXPOSURE, FRAME_EXPOSURE)
+if FRAME_EXPOSURE > 0:
+    capture.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
+    capture.set(cv2.CAP_PROP_EXPOSURE, FRAME_EXPOSURE)
 frame = numpy.zeros((120, 160, 3), dtype=numpy.uint8)
 
 class cameraThread(threading.Thread):
@@ -223,25 +228,13 @@ while True:
         res = cv2.bitwise_and(res, res, mask=ROI_MASK)
         gray = cv2.cvtColor(res, cv2.COLOR_BGR2GRAY)
         blur = cv2.GaussianBlur(gray, (7, 7), 0)
-        edges = cv2.Canny(blur, 50, 150)
-        dilation = cv2.dilate(edges, cv2.getStructuringElement(cv2.MORPH_DILATE, (5, 5)))
-        res_gray = cv2.erode(dilation, cv2.getStructuringElement(cv2.MORPH_ERODE, (3, 3)))
-        #res_gray = blur + erosion
-        lines = cv2.HoughLinesP(res_gray, 2, numpy.pi/180, 20, numpy.array([]), minLineLength=30, maxLineGap=30)
-        if lines is not None:
-            line_img = numpy.zeros((res.shape[0], res.shape[1], 3), dtype=numpy.uint8)
-            for line in lines:
-                for x1,y1,x2,y2 in line:
-                    angle = numpy.arctan2(y2 - y1, x2 - x1) * 180. / numpy.pi
-                    if ( (abs(angle) > 20.) and (abs(angle) < 90.)):
-                        cv2.line(line_img, (x1, y1), (x2, y2), (0,0,255), 1)
-            res = cv2.cvtColor(res_gray, cv2.COLOR_GRAY2BGR)
-            res = cv2.addWeighted(res, 0.8, line_img, 1, 0)
-            gray_lines = cv2.cvtColor(line_img, cv2.COLOR_BGR2GRAY)
-            pixelpoints = cv2.findNonZero(gray_lines)
+        res = cv2.cvtColor(blur, cv2.COLOR_GRAY2BGR)
+        if True:
+            lines = None
+            pixelpoints = cv2.findNonZero(blur)
             if pixelpoints is not None:
                 try:
-                    [vx,vy,x,y] = cv2.fitLine(pixelpoints, 4, 0, 0.01, 0.01)
+                    [vx,vy,x,y] = cv2.fitLine(pixelpoints, cv2.DIST_L1, 0, 0.01, 0.01)
                     line = [vx,vy,x,y]
                 except:
                     line = False
@@ -249,7 +242,33 @@ while True:
             else:
                 line = False
         else:
-            line = False
+            edges = cv2.Canny(blur, 50, 150)
+            dilation = cv2.dilate(edges, cv2.getStructuringElement(cv2.MORPH_DILATE, (5, 5)))
+            res_gray = cv2.erode(dilation, cv2.getStructuringElement(cv2.MORPH_ERODE, (3, 3)))
+            #res_gray = blur + erosion
+            lines = cv2.HoughLinesP(res_gray, 2, numpy.pi/180, 20, numpy.array([]), minLineLength=30, maxLineGap=30)
+            if lines is not None:
+                line_img = numpy.zeros((res.shape[0], res.shape[1], 3), dtype=numpy.uint8)
+                for line in lines:
+                    for x1,y1,x2,y2 in line:
+                        angle = numpy.arctan2(y2 - y1, x2 - x1) * 180. / numpy.pi
+                        if ( (abs(angle) > 20.) and (abs(angle) < 90.)):
+                            cv2.line(line_img, (x1, y1), (x2, y2), (0,0,255), 1)
+                res = cv2.cvtColor(res_gray, cv2.COLOR_GRAY2BGR)
+                res = cv2.addWeighted(res, 0.8, line_img, 1, 0)
+                gray_lines = cv2.cvtColor(line_img, cv2.COLOR_BGR2GRAY)
+                pixelpoints = cv2.findNonZero(gray_lines)
+                if pixelpoints is not None:
+                    try:
+                        [vx,vy,x,y] = cv2.fitLine(pixelpoints, 4, 0, 0.01, 0.01)
+                        line = [vx,vy,x,y]
+                    except:
+                        line = False
+                        pass
+                else:
+                    line = False
+            else:
+                line = False
 
     print_string = ""
     if line:
@@ -306,6 +325,6 @@ while True:
 
     set_servos(throttle_output, steering_output)
     if BINARY_VIEW:
-        cv2.imwrite('/run/bluedonkey/camera.jpg', frame)
-        cv2.imwrite('/run/bluedonkey/filtered.jpg', res)
+        cv2.imwrite('/run/bluedonkey/camera.png', frame)
+        cv2.imwrite('/run/bluedonkey/filtered.png', res)
     print("FPS %02.2f - %s\r" % (clock.get_fps(), print_string), end="")
