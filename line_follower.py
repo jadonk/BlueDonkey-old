@@ -76,17 +76,17 @@ THROTTLE_D_GAIN = 0.0
 
 # Tweak these values for your robocar.
 STEERING_OFFSET = 90 # Change this if you need to fix an imbalance in your car (0 to 180).
-STEERING_P_GAIN = 1.5 # Make this smaller as you increase your speed and vice versa.
+STEERING_P_GAIN = -40.0 # Make this smaller as you increase your speed and vice versa.
 STEERING_I_GAIN = 0.0
 STEERING_I_MIN = -0.0
 STEERING_I_MAX = 0.0
-STEERING_D_GAIN = 0.4 # Make this larger as you increase your speed and vice versa.
+STEERING_D_GAIN = -9 # Make this larger as you increase your speed and vice versa.
 
 # Tweak these values for your robocar.
 #THROTTLE_SERVO_MIN_US = 1500
 #THROTTLE_SERVO_MAX_US = 2000
 THROTTLE_SERVO_MIN_US = 0
-THROTTLE_SERVO_MAX_US = 0.1
+THROTTLE_SERVO_MAX_US = 0.05
 
 # Tweak these values for your robocar.
 #STEERING_SERVO_MIN_US = 700
@@ -130,17 +130,18 @@ def figure_out_my_steering(line, img):
     # Anyway, the output of this calculations below are a point centered vertically in the middle
     # of the image and to the left or right such that the line goes through it (cx may be off the image).
     height, width, layers = img.shape
-    cy = height * 3 / 4
+    cy = height / 2
     xslope = line[0] / line[1]
     xint =  line[2] - xslope*line[3]
     cx = xslope*cy + xint
     #cx = line[2]
-    #print(cx, end="")
+    #print("%05.2f " % (cx), end="")
 
     # "cx_middle" is now the distance from the center of the line. This is our error method to stay
     # on the line. "cx_normal" normalizes the error to something like -1/+1 (it will go over this).
     cx_middle = cx - (width / 2)
     cx_normal = cx_middle / (width / 2)
+    #print("%05.2f " % (cx_normal), end="")
     # Note that "cx_normal" may be larger than -1/+1. When the value is between -1/+1 this means the
     # robot is driving basically straight and needs to only turn lightly left or right. When the value
     # is outside -1/+1 it means you need to turn VERY hard to the left or right to get back on the
@@ -148,8 +149,10 @@ def figure_out_my_steering(line, img):
     # then approach -inf/+inf depending on how horizontal the line is. What's nice is that this
     # is exactly the behavior we want and it gets up back on the line!
 
-    if old_cx_normal != None: old_cx_normal = (cx_normal * MIXING_RATE) + (old_cx_normal * (1.0 - MIXING_RATE))
-    else: old_cx_normal = cx_normal
+    if old_cx_normal != None:
+        old_cx_normal = (cx_normal * MIXING_RATE) + (old_cx_normal * (1.0 - MIXING_RATE))
+    else: 
+        old_cx_normal = cx_normal
     return old_cx_normal
 
 # Solve: THROTTLE_CUT_OFF_RATE = pow(sin(90 +/- THROTTLE_CUT_OFF_ANGLE), x) for x...
@@ -181,7 +184,7 @@ def set_servos(throttle, steering):
 #
 
 capture = cv2.VideoCapture(0)
-capture.set(cv2.CAP_PROP_FPS, 10)
+capture.set(cv2.CAP_PROP_FPS, 30)
 capture.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH)
 capture.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
 if FRAME_EXPOSURE > 0:
@@ -272,10 +275,15 @@ while True:
 
     print_string = ""
     if line:
-        lefty = int((-x*vy/vx) + y)
-        righty = int(((160-x)*vy/vx)+y)
-        res = cv2.line(res, (159,righty), (0,lefty), (0,255,0), 2)
+        try:
+            lefty = int((-x*vy/vx) + y)
+            righty = int(((160-x)*vy/vx)+y)
+            res = cv2.line(res, (159,righty), (0,lefty), (0,255,0), 2)
+        except:
+            line = False
+            pass
 
+    if line:
         new_time = datetime.datetime.now()
         delta_time = (new_time - old_time).microseconds / 1000
         old_time = new_time
@@ -285,6 +293,7 @@ while True:
         #
 
         steering_new_result = figure_out_my_steering(line, frame)
+        #print("%05.2f " % (steering_new_result), end="")
         steering_delta_result = (steering_new_result - steering_old_result) if (steering_old_result != None) else 0
         steering_old_result = steering_new_result
 
@@ -327,4 +336,4 @@ while True:
     if BINARY_VIEW:
         cv2.imwrite('/run/bluedonkey/camera.png', frame)
         cv2.imwrite('/run/bluedonkey/filtered.png', res)
-    print("FPS %02.2f - %s\r" % (clock.get_fps(), print_string), end="")
+    print("FPS %05.2f - %s\r" % (clock.get_fps(), print_string), end="")
