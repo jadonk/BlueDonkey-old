@@ -46,8 +46,8 @@ COLOR_HIGH_LIGHT_THRESHOLDS_MIN = numpy.array([230,230,230])
 #FRAME_EXPOSURE = 0.000001
 FRAME_EXPOSURE = 0
 GRAYSCALE_HIGH_LIGHT_THRESHOLDS = [(250, 255)]
-BINARY_VIEW = False # Helps debugging but costs FPS if on.
-#BINARY_VIEW = True # Helps debugging but costs FPS if on.
+#BINARY_VIEW = False # Helps debugging but costs FPS if on.
+BINARY_VIEW = True # Helps debugging but costs FPS if on.
 DO_NOTHING = False # Just capture frames...
 #FRAME_SIZE = sensor.QQVGA # Frame size.
 FRAME_WIDTH = 160
@@ -76,11 +76,11 @@ THROTTLE_D_GAIN = 0.0
 
 # Tweak these values for your robocar.
 STEERING_OFFSET = 90 # Change this if you need to fix an imbalance in your car (0 to 180).
-STEERING_P_GAIN = -40.0 # Make this smaller as you increase your speed and vice versa.
+STEERING_P_GAIN = -30.0 # Make this smaller as you increase your speed and vice versa.
 STEERING_I_GAIN = 0.0
 STEERING_I_MIN = -0.0
 STEERING_I_MAX = 0.0
-STEERING_D_GAIN = -9 # Make this larger as you increase your speed and vice versa.
+STEERING_D_GAIN = -15 # Make this larger as you increase your speed and vice versa.
 
 # Tweak these values for your robocar.
 #THROTTLE_SERVO_MIN_US = 1500
@@ -234,7 +234,7 @@ while True:
     #ret, frame = capture.read()
     if True:
         frame_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        color_mask = cv2.inRange(frame_hsv[:,:,2], 220, 255)
+        color_mask = cv2.inRange(frame_hsv[:,:,2], 180, 255)
         masked = cv2.bitwise_and(frame_hsv[:,:,2], frame_hsv[:,:,2], mask=color_mask)
         masked = cv2.bitwise_and(masked, masked, mask=ROI_MASK)
         #gray = cv2.cvtColor(res, cv2.COLOR_BGR2GRAY)
@@ -337,7 +337,7 @@ while True:
             (throttle_output , steering_output)
 
     else:
-        throttle_output = throttle_output * 0.9999
+        throttle_output = throttle_output * 0.99
         print_string = "Line Lost - throttle %03d, steering %03d" % (throttle_output , steering_output)
 
     set_servos(throttle_output, steering_output)
