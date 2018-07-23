@@ -124,30 +124,37 @@ STEERING_SERVO_MAX_US = tmp
 old_cx_normal = None
 def figure_out_my_steering(line, img):
     global old_cx_normal
+    [vx,vy,x,y] = line
+                        
+    if vy != 0:
+        # Rho is computed using the inverse of this code below in the actual OpenMV Cam code.
+        # This formula comes from the Hough line detection formula (see the wikipedia page for more).
+        # Anyway, the output of this calculations below are a point centered vertically in the middle
+        # of the image and to the left or right such that the line goes through it (cx may be off the image).
+        height, width, layers = img.shape
+        cy = height / 2
+        xslope = vx / vy
+        xint =  x - xslope*y
+        cx = xslope*cy + xint
+        #cx = line[2]
+        #print("%05.2f " % (cx), end="")
 
-    # Rho is computed using the inverse of this code below in the actual OpenMV Cam code.
-    # This formula comes from the Hough line detection formula (see the wikipedia page for more).
-    # Anyway, the output of this calculations below are a point centered vertically in the middle
-    # of the image and to the left or right such that the line goes through it (cx may be off the image).
-    height, width, layers = img.shape
-    cy = height / 2
-    xslope = line[0] / line[1]
-    xint =  line[2] - xslope*line[3]
-    cx = xslope*cy + xint
-    #cx = line[2]
-    #print("%05.2f " % (cx), end="")
-
-    # "cx_middle" is now the distance from the center of the line. This is our error method to stay
-    # on the line. "cx_normal" normalizes the error to something like -1/+1 (it will go over this).
-    cx_middle = cx - (width / 2)
-    cx_normal = cx_middle / (width / 2)
-    #print("%05.2f " % (cx_normal), end="")
-    # Note that "cx_normal" may be larger than -1/+1. When the value is between -1/+1 this means the
-    # robot is driving basically straight and needs to only turn lightly left or right. When the value
-    # is outside -1/+1 it means you need to turn VERY hard to the left or right to get back on the
-    # line. This maps to the case of the robot driving into a horizontal line. "cx_normal" will
-    # then approach -inf/+inf depending on how horizontal the line is. What's nice is that this
-    # is exactly the behavior we want and it gets up back on the line!
+        # "cx_middle" is now the distance from the center of the line. This is our error method to stay
+        # on the line. "cx_normal" normalizes the error to something like -1/+1 (it will go over this).
+        cx_middle = cx - (width / 2)
+        cx_normal = cx_middle / (width / 2)
+        #print("%05.2f " % (cx_normal), end="")
+        # Note that "cx_normal" may be larger than -1/+1. When the value is between -1/+1 this means the
+        # robot is driving basically straight and needs to only turn lightly left or right. When the value
+        # is outside -1/+1 it means you need to turn VERY hard to the left or right to get back on the
+        # line. This maps to the case of the robot driving into a horizontal line. "cx_normal" will
+        # then approach -inf/+inf depending on how horizontal the line is. What's nice is that this
+        # is exactly the behavior we want and it gets up back on the line!
+    else:
+        if old_cx_normal != None:
+            cx_normal = old_cx_normal
+        else:
+            cx_normal = 0
 
     if old_cx_normal != None:
         old_cx_normal = (cx_normal * MIXING_RATE) + (old_cx_normal * (1.0 - MIXING_RATE))
