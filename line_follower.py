@@ -285,7 +285,7 @@ while True:
 
     if line:
         new_time = datetime.datetime.now()
-        delta_time = (new_time - old_time).microseconds / 1000
+        delta_time = (new_time - old_time).microseconds / 1000000
         old_time = new_time
 
         #
