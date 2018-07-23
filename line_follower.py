@@ -86,7 +86,7 @@ STEERING_D_GAIN = -9 # Make this larger as you increase your speed and vice vers
 #THROTTLE_SERVO_MIN_US = 1500
 #THROTTLE_SERVO_MAX_US = 2000
 THROTTLE_SERVO_MIN_US = 0
-THROTTLE_SERVO_MAX_US = 0.05
+THROTTLE_SERVO_MAX_US = 0.08
 
 # Tweak these values for your robocar.
 #STEERING_SERVO_MIN_US = 700
@@ -226,18 +226,19 @@ while True:
     clock.tick()
     #ret, frame = capture.read()
     if True:
-        color_mask = cv2.inRange(frame, COLOR_HIGH_LIGHT_THRESHOLDS_MIN, COLOR_HIGH_LIGHT_THRESHOLDS_MAX)
-        res = cv2.bitwise_and(frame, frame, mask=color_mask)
-        res = cv2.bitwise_and(res, res, mask=ROI_MASK)
-        gray = cv2.cvtColor(res, cv2.COLOR_BGR2GRAY)
-        blur = cv2.GaussianBlur(gray, (7, 7), 0)
-        res = cv2.cvtColor(blur, cv2.COLOR_GRAY2BGR)
+        frame_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        color_mask = cv2.inRange(frame_hsv[:,:,2], 220, 255)
+        masked = cv2.bitwise_and(frame_hsv[:,:,2], frame_hsv[:,:,2], mask=color_mask)
+        masked = cv2.bitwise_and(masked, masked, mask=ROI_MASK)
+        #gray = cv2.cvtColor(res, cv2.COLOR_BGR2GRAY)
+        #blur = cv2.GaussianBlur(masked, (7, 7), 0)
+        res = cv2.cvtColor(masked, cv2.COLOR_GRAY2BGR)
         if True:
             lines = None
-            pixelpoints = cv2.findNonZero(blur)
+            pixelpoints = cv2.findNonZero(masked)
             if pixelpoints is not None:
                 try:
-                    [vx,vy,x,y] = cv2.fitLine(pixelpoints, cv2.DIST_L1, 0, 0.01, 0.01)
+                    [vx,vy,x,y] = cv2.fitLine(pixelpoints, cv2.DIST_L2, 0, 0.01, 0.01)
                     line = [vx,vy,x,y]
                 except:
                     line = False
@@ -285,7 +286,7 @@ while True:
 
     if line:
         new_time = datetime.datetime.now()
-        delta_time = (new_time - old_time).microseconds / 1000000
+        delta_time = (new_time - old_time).microseconds / 1000
         old_time = new_time
 
         #
