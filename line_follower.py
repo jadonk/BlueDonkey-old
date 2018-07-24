@@ -49,8 +49,8 @@ COLOR_HIGH_LIGHT_THRESHOLDS_MIN = numpy.array([230,230,230])
 #FRAME_EXPOSURE = 0.000001
 FRAME_EXPOSURE = 0
 GRAYSCALE_HIGH_LIGHT_THRESHOLDS = [(250, 255)]
-BINARY_VIEW = False # Helps debugging but costs FPS if on.
-#BINARY_VIEW = True # Helps debugging but costs FPS if on.
+#BINARY_VIEW = False # Helps debugging but costs FPS if on.
+BINARY_VIEW = True # Helps debugging but costs FPS if on.
 DO_NOTHING = False # Just capture frames...
 #FRAME_SIZE = sensor.QQVGA # Frame size.
 FRAME_WIDTH = 160
@@ -201,14 +201,15 @@ if FRAME_EXPOSURE > 0:
     capture.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
     capture.set(cv2.CAP_PROP_EXPOSURE, FRAME_EXPOSURE)
 frame = numpy.zeros((120, 160, 3), dtype=numpy.uint8)
+frame_in = numpy.zeros((120, 160, 3), dtype=numpy.uint8)
 
 class cameraThread(threading.Thread):
     def run(self):
-        global frame
+        global frame, frame_in
         while True:            
             ret, frametmp = capture.read()
             if ret:
-                frame = frametmp
+                frame_in = frametmp
             k = cv2.waitKey(5) & 0xFF
             if k == ord('q'):
                 break
@@ -237,6 +238,7 @@ frame_cnt = 0
 while True:
     clock.tick()
     #ret, frame = capture.read()
+    frame = frame_in
     if True:
         frame_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         color_mask = cv2.inRange(frame_hsv[:,:,2], 180, 255)
