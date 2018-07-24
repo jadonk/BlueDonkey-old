@@ -34,6 +34,9 @@ servo3.set(0)
 # Settings
 ###########
 
+IMG_DIR = "/mnt"
+#IMG_DIR = "/run/bluedonkey"
+
 COLOR_LINE_FOLLOWING = True # False to use grayscale thresholds, true to use color thresholds.
 COLOR_THRESHOLDS = [( 85, 100,  -40,  -10,    0,  127)] # Yellow Line.
 GRAYSCALE_THRESHOLDS = [(240, 255)] # White Line.
@@ -46,8 +49,8 @@ COLOR_HIGH_LIGHT_THRESHOLDS_MIN = numpy.array([230,230,230])
 #FRAME_EXPOSURE = 0.000001
 FRAME_EXPOSURE = 0
 GRAYSCALE_HIGH_LIGHT_THRESHOLDS = [(250, 255)]
-#BINARY_VIEW = False # Helps debugging but costs FPS if on.
-BINARY_VIEW = True # Helps debugging but costs FPS if on.
+BINARY_VIEW = False # Helps debugging but costs FPS if on.
+#BINARY_VIEW = True # Helps debugging but costs FPS if on.
 DO_NOTHING = False # Just capture frames...
 #FRAME_SIZE = sensor.QQVGA # Frame size.
 FRAME_WIDTH = 160
@@ -67,7 +70,7 @@ MIXING_RATE = 0.9 # Percentage of a new line detection to mix into current steer
 THROTTLE_CUT_OFF_ANGLE = 3.0 # Maximum angular distance from 90 before we cut speed [0.0-90.0).
 THROTTLE_CUT_OFF_RATE = 0.2 # How much to cut our speed boost (below) once the above is passed (0.0-1.0].
 THROTTLE_GAIN = 0.0 # e.g. how much to speed up on a straight away
-THROTTLE_OFFSET = 90.0 # e.g. default speed (0 to 100)
+THROTTLE_OFFSET = 75.0 # e.g. default speed (0 to 100)
 THROTTLE_P_GAIN = 1.0
 THROTTLE_I_GAIN = 0.0
 THROTTLE_I_MIN = -0.0
@@ -76,17 +79,17 @@ THROTTLE_D_GAIN = 0.0
 
 # Tweak these values for your robocar.
 STEERING_OFFSET = 90 # Change this if you need to fix an imbalance in your car (0 to 180).
-STEERING_P_GAIN = -30.0 # Make this smaller as you increase your speed and vice versa.
+STEERING_P_GAIN = -20.0 # Make this smaller as you increase your speed and vice versa.
 STEERING_I_GAIN = 0.0
 STEERING_I_MIN = -0.0
 STEERING_I_MAX = 0.0
-STEERING_D_GAIN = -15 # Make this larger as you increase your speed and vice versa.
+STEERING_D_GAIN = -7 # Make this larger as you increase your speed and vice versa.
 
 # Tweak these values for your robocar.
 #THROTTLE_SERVO_MIN_US = 1500
 #THROTTLE_SERVO_MAX_US = 2000
 THROTTLE_SERVO_MIN_US = 0
-THROTTLE_SERVO_MAX_US = 0.08
+THROTTLE_SERVO_MAX_US = 0.09
 
 # Tweak these values for your robocar.
 #STEERING_SERVO_MIN_US = 700
@@ -229,6 +232,8 @@ steering_old_result = None
 steering_i_output = 0
 steering_output = STEERING_OFFSET
 
+frame_cnt = 0
+
 while True:
     clock.tick()
     #ret, frame = capture.read()
@@ -342,6 +347,9 @@ while True:
 
     set_servos(throttle_output, steering_output)
     if BINARY_VIEW:
-        cv2.imwrite('/run/bluedonkey/camera.png', frame)
-        cv2.imwrite('/run/bluedonkey/filtered.png', res)
+        frame_file_name = "%s/cam%05d.png" % (IMG_DIR, frame_cnt)
+        res_file_name = "%s/res%05d.png" % (IMG_DIR, frame_cnt)
+        frame_cnt += 1
+        cv2.imwrite(frame_file_name, frame)
+        cv2.imwrite(res_file_name, res)
     print("FPS %05.2f - %s\r" % (clock.get_fps(), print_string), end="")
