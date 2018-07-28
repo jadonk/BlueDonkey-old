@@ -34,7 +34,7 @@ servo3.set(0)
 # Settings
 ###########
 
-IMG_DIR = "/mnt"
+IMG_DIR = "/var/lib/cloud9/mnt"
 #IMG_DIR = "/run/bluedonkey"
 
 COLOR_LINE_FOLLOWING = True # False to use grayscale thresholds, true to use color thresholds.
@@ -44,8 +44,8 @@ COLOR_HIGH_LIGHT_THRESHOLDS = [(80, 100, -10, 10, -10, 10)]
 # https://pythonprogramming.net/color-filter-python-opencv-tutorial/
 #COLOR_HIGH_LIGHT_THRESHOLDS_MAX = numpy.array([255,255,255])
 #COLOR_HIGH_LIGHT_THRESHOLDS_MIN = numpy.array([230,230,230])
-COLOR_HIGH_LIGHT_THRESHOLDS_MAX = numpy.array([255,190,50])
-COLOR_HIGH_LIGHT_THRESHOLDS_MIN = numpy.array([170,0,0])
+COLOR_HIGH_LIGHT_THRESHOLDS_MAX = numpy.array([255,190,60])
+COLOR_HIGH_LIGHT_THRESHOLDS_MIN = numpy.array([165,40,0])
 #FRAME_EXPOSURE = 0.000001
 FRAME_EXPOSURE = 0
 GRAYSCALE_HIGH_LIGHT_THRESHOLDS = [(250, 255)]
@@ -283,6 +283,7 @@ while True:
         res_file_name = "%s/res%05d.png" % (IMG_DIR, frame_cnt)
         frame_cnt += 1
         cv2.imwrite(frame_file_name, frame)
-        res = cv2.line(res, (x,0), (x,119), (0,255,0), 2)
+        if line:
+            res = cv2.line(res, (x,0), (x,119), (0,255,0), 2)
         cv2.imwrite(res_file_name, res)
     print("FPS %05.2f - %s\r" % (clock.get_fps(), print_string), end="")
