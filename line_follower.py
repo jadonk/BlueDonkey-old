@@ -128,6 +128,7 @@ old_cx_normal = None
 def figure_out_my_steering(line, img):
     global old_cx_normal
     [vx,vy,x,y] = line
+    height, width, layers = img.shape
     cx_middle = x - (width / 2)
     cx_normal = cx_middle / (width / 2)
 
@@ -227,8 +228,6 @@ while True:
 
     print_string = ""
     if line:
-        res = cv2.line(res, (0,righty), (0,lefty), (0,255,0), 2)
-
         new_time = datetime.datetime.now()
         delta_time = (new_time - old_time).microseconds / 1000
         old_time = new_time
@@ -284,5 +283,6 @@ while True:
         res_file_name = "%s/res%05d.png" % (IMG_DIR, frame_cnt)
         frame_cnt += 1
         cv2.imwrite(frame_file_name, frame)
+        res = cv2.line(res, (x,0), (x,119), (0,255,0), 2)
         cv2.imwrite(res_file_name, res)
     print("FPS %05.2f - %s\r" % (clock.get_fps(), print_string), end="")
