@@ -34,7 +34,7 @@ servo3.set(0)
 # Settings
 ###########
 
-IMG_DIR = "/mnt"
+IMG_DIR = "/var/lib/cloud9/mnt"
 #IMG_DIR = "/run/bluedonkey"
 
 COLOR_LINE_FOLLOWING = True # False to use grayscale thresholds, true to use color thresholds.
@@ -42,15 +42,15 @@ COLOR_THRESHOLDS = [( 85, 100,  -40,  -10,    0,  127)] # Yellow Line.
 GRAYSCALE_THRESHOLDS = [(240, 255)] # White Line.
 COLOR_HIGH_LIGHT_THRESHOLDS = [(80, 100, -10, 10, -10, 10)]
 # https://pythonprogramming.net/color-filter-python-opencv-tutorial/
-COLOR_HIGH_LIGHT_THRESHOLDS_MAX = numpy.array([255,255,255])
-COLOR_HIGH_LIGHT_THRESHOLDS_MIN = numpy.array([230,230,230])
-#COLOR_HIGH_LIGHT_THRESHOLDS_MAX = numpy.array([255,190,50])
-#COLOR_HIGH_LIGHT_THRESHOLDS_MIN = numpy.array([170,0,0])
+#COLOR_HIGH_LIGHT_THRESHOLDS_MAX = numpy.array([255,255,255])
+#COLOR_HIGH_LIGHT_THRESHOLDS_MIN = numpy.array([230,230,230])
+COLOR_HIGH_LIGHT_THRESHOLDS_MAX = numpy.array([255,190,60])
+COLOR_HIGH_LIGHT_THRESHOLDS_MIN = numpy.array([165,40,0])
 #FRAME_EXPOSURE = 0.000001
 FRAME_EXPOSURE = 0
 GRAYSCALE_HIGH_LIGHT_THRESHOLDS = [(250, 255)]
-#BINARY_VIEW = False # Helps debugging but costs FPS if on.
-BINARY_VIEW = True # Helps debugging but costs FPS if on.
+BINARY_VIEW = False # Helps debugging but costs FPS if on.
+#BINARY_VIEW = True # Helps debugging but costs FPS if on.
 DO_NOTHING = False # Just capture frames...
 #FRAME_SIZE = sensor.QQVGA # Frame size.
 FRAME_WIDTH = 160
@@ -68,7 +68,7 @@ MIXING_RATE = 0.9 # Percentage of a new line detection to mix into current steer
 
 # Tweak these values for your robocar.
 THROTTLE_CUT_OFF_ANGLE = 3.0 # Maximum angular distance from 90 before we cut speed [0.0-90.0).
-THROTTLE_CUT_OFF_RATE = 0.2 # How much to cut our speed boost (below) once the above is passed (0.0-1.0].
+THROTTLE_CUT_OFF_RATE = 0.8 # How much to cut our speed boost (below) once the above is passed (0.0-1.0].
 THROTTLE_GAIN = 0.0 # e.g. how much to speed up on a straight away
 THROTTLE_OFFSET = 75.0 # e.g. default speed (0 to 100)
 THROTTLE_P_GAIN = 1.0
@@ -79,7 +79,7 @@ THROTTLE_D_GAIN = 0.0
 
 # Tweak these values for your robocar.
 STEERING_OFFSET = 90 # Change this if you need to fix an imbalance in your car (0 to 180).
-STEERING_P_GAIN = -20.0 # Make this smaller as you increase your speed and vice versa.
+STEERING_P_GAIN = -30.0 # Make this smaller as you increase your speed and vice versa.
 STEERING_I_GAIN = 0.0
 STEERING_I_MIN = -0.0
 STEERING_I_MAX = 0.0
@@ -89,7 +89,7 @@ STEERING_D_GAIN = -7 # Make this larger as you increase your speed and vice vers
 #THROTTLE_SERVO_MIN_US = 1500
 #THROTTLE_SERVO_MAX_US = 2000
 THROTTLE_SERVO_MIN_US = 0
-THROTTLE_SERVO_MAX_US = 0.09
+THROTTLE_SERVO_MAX_US = 0.1
 
 # Tweak these values for your robocar.
 #STEERING_SERVO_MIN_US = 700
@@ -128,36 +128,9 @@ old_cx_normal = None
 def figure_out_my_steering(line, img):
     global old_cx_normal
     [vx,vy,x,y] = line
-                        
-    if vy != 0:
-        # Rho is computed using the inverse of this code below in the actual OpenMV Cam code.
-        # This formula comes from the Hough line detection formula (see the wikipedia page for more).
-        # Anyway, the output of this calculations below are a point centered vertically in the middle
-        # of the image and to the left or right such that the line goes through it (cx may be off the image).
-        height, width, layers = img.shape
-        cy = height / 2
-        xslope = vx / vy
-        xint =  x - xslope*y
-        cx = xslope*cy + xint
-        #cx = line[2]
-        #print("%05.2f " % (cx), end="")
-
-        # "cx_middle" is now the distance from the center of the line. This is our error method to stay
-        # on the line. "cx_normal" normalizes the error to something like -1/+1 (it will go over this).
-        cx_middle = cx - (width / 2)
-        cx_normal = cx_middle / (width / 2)
-        #print("%05.2f " % (cx_normal), end="")
-        # Note that "cx_normal" may be larger than -1/+1. When the value is between -1/+1 this means the
-        # robot is driving basically straight and needs to only turn lightly left or right. When the value
-        # is outside -1/+1 it means you need to turn VERY hard to the left or right to get back on the
-        # line. This maps to the case of the robot driving into a horizontal line. "cx_normal" will
-        # then approach -inf/+inf depending on how horizontal the line is. What's nice is that this
-        # is exactly the behavior we want and it gets up back on the line!
-    else:
-        if old_cx_normal != None:
-            cx_normal = old_cx_normal
-        else:
-            cx_normal = 0
+    height, width, layers = img.shape
+    cx_middle = x - (width / 2)
+    cx_normal = cx_middle / (width / 2)
 
     if old_cx_normal != None:
         old_cx_normal = (cx_normal * MIXING_RATE) + (old_cx_normal * (1.0 - MIXING_RATE))
@@ -239,65 +212,21 @@ while True:
     clock.tick()
     #ret, frame = capture.read()
     frame = frame_in
-    if True:
-        frame_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        color_mask = cv2.inRange(frame_hsv[:,:,2], 180, 255)
-        masked = cv2.bitwise_and(frame_hsv[:,:,2], frame_hsv[:,:,2], mask=color_mask)
-        masked = cv2.bitwise_and(masked, masked, mask=ROI_MASK)
-        #gray = cv2.cvtColor(res, cv2.COLOR_BGR2GRAY)
-        #blur = cv2.GaussianBlur(masked, (7, 7), 0)
-        res = cv2.cvtColor(masked, cv2.COLOR_GRAY2BGR)
-        if True:
-            lines = None
-            pixelpoints = cv2.findNonZero(masked)
-            if pixelpoints is not None:
-                try:
-                    [vx,vy,x,y] = cv2.fitLine(pixelpoints, cv2.DIST_L2, 0, 0.01, 0.01)
-                    line = [vx,vy,x,y]
-                except:
-                    line = False
-                    pass
-            else:
-                line = False
-        else:
-            edges = cv2.Canny(blur, 50, 150)
-            dilation = cv2.dilate(edges, cv2.getStructuringElement(cv2.MORPH_DILATE, (5, 5)))
-            res_gray = cv2.erode(dilation, cv2.getStructuringElement(cv2.MORPH_ERODE, (3, 3)))
-            #res_gray = blur + erosion
-            lines = cv2.HoughLinesP(res_gray, 2, numpy.pi/180, 20, numpy.array([]), minLineLength=30, maxLineGap=30)
-            if lines is not None:
-                line_img = numpy.zeros((res.shape[0], res.shape[1], 3), dtype=numpy.uint8)
-                for line in lines:
-                    for x1,y1,x2,y2 in line:
-                        angle = numpy.arctan2(y2 - y1, x2 - x1) * 180. / numpy.pi
-                        if ( (abs(angle) > 20.) and (abs(angle) < 90.)):
-                            cv2.line(line_img, (x1, y1), (x2, y2), (0,0,255), 1)
-                res = cv2.cvtColor(res_gray, cv2.COLOR_GRAY2BGR)
-                res = cv2.addWeighted(res, 0.8, line_img, 1, 0)
-                gray_lines = cv2.cvtColor(line_img, cv2.COLOR_BGR2GRAY)
-                pixelpoints = cv2.findNonZero(gray_lines)
-                if pixelpoints is not None:
-                    try:
-                        [vx,vy,x,y] = cv2.fitLine(pixelpoints, 4, 0, 0.01, 0.01)
-                        line = [vx,vy,x,y]
-                    except:
-                        line = False
-                        pass
-                else:
-                    line = False
-            else:
-                line = False
+    color_mask = cv2.inRange(frame, COLOR_HIGH_LIGHT_THRESHOLDS_MIN, COLOR_HIGH_LIGHT_THRESHOLDS_MAX)
+    res = cv2.bitwise_and(frame, frame, mask=color_mask)
+    res = cv2.bitwise_and(res, res, mask=ROI_MASK)
+    gray = cv2.cvtColor(res, cv2.COLOR_BGR2GRAY)
+    pixelpoints = cv2.findNonZero(gray)
+    if pixelpoints is not None:
+        vx = 0
+        vy = 1
+        x = int(pixelpoints[:,:,0].mean())
+        y = 50
+        line = [vx,vy,x,y]
+    else:
+        line = False
 
     print_string = ""
-    if line:
-        try:
-            lefty = int((-x*vy/vx) + y)
-            righty = int(((160-x)*vy/vx)+y)
-            res = cv2.line(res, (159,righty), (0,lefty), (0,255,0), 2)
-        except:
-            line = False
-            pass
-
     if line:
         new_time = datetime.datetime.now()
         delta_time = (new_time - old_time).microseconds / 1000
@@ -340,12 +269,13 @@ while True:
         # Throttle goes from 0% to 100%.
         throttle_output = max(min(throttle_pid_output, 100), 0)
 
-        print_string = "Line Ok   - throttle %03d, steering %03d" % \
-            (throttle_output , steering_output)
+        print_string = "Line Ok   - throttle %03d, steering %03d, frame %05d" % \
+            (throttle_output , steering_output, frame_cnt)
 
     else:
         throttle_output = throttle_output * 0.99
-        print_string = "Line Lost - throttle %03d, steering %03d" % (throttle_output , steering_output)
+        print_string = "Line Lost - throttle %03d, steering %03d, frame %05d" % \
+            (throttle_output , steering_output, frame_cnt)
 
     set_servos(throttle_output, steering_output)
     if BINARY_VIEW:
@@ -353,5 +283,7 @@ while True:
         res_file_name = "%s/res%05d.png" % (IMG_DIR, frame_cnt)
         frame_cnt += 1
         cv2.imwrite(frame_file_name, frame)
+        if line:
+            res = cv2.line(res, (x,0), (x,119), (0,255,0), 2)
         cv2.imwrite(res_file_name, res)
     print("FPS %05.2f - %s\r" % (clock.get_fps(), print_string), end="")
