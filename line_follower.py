@@ -35,12 +35,6 @@ servo3.set(0)
 ###########
 
 IMG_DIR = "/var/lib/cloud9/mnt"
-#IMG_DIR = "/run/bluedonkey"
-
-COLOR_LINE_FOLLOWING = True # False to use grayscale thresholds, true to use color thresholds.
-COLOR_THRESHOLDS = [( 85, 100,  -40,  -10,    0,  127)] # Yellow Line.
-GRAYSCALE_THRESHOLDS = [(240, 255)] # White Line.
-COLOR_HIGH_LIGHT_THRESHOLDS = [(80, 100, -10, 10, -10, 10)]
 # https://pythonprogramming.net/color-filter-python-opencv-tutorial/
 #COLOR_HIGH_LIGHT_THRESHOLDS_MAX = numpy.array([255,255,255])
 #COLOR_HIGH_LIGHT_THRESHOLDS_MIN = numpy.array([230,230,230])
@@ -48,23 +42,18 @@ COLOR_HIGH_LIGHT_THRESHOLDS_MAX = numpy.array([255,190,60])
 COLOR_HIGH_LIGHT_THRESHOLDS_MIN = numpy.array([165,40,0])
 #FRAME_EXPOSURE = 0.000001
 FRAME_EXPOSURE = 0
-GRAYSCALE_HIGH_LIGHT_THRESHOLDS = [(250, 255)]
 BINARY_VIEW = False # Helps debugging but costs FPS if on.
 #BINARY_VIEW = True # Helps debugging but costs FPS if on.
-DO_NOTHING = False # Just capture frames...
-#FRAME_SIZE = sensor.QQVGA # Frame size.
 FRAME_WIDTH = 160
 FRAME_HEIGHT = 120
 FRAME_REGION = 0.75 # Percentage of the image from the bottom (0 - 1.0).
 FRAME_WIDE = 1.0 # Percentage of the frame width.
 ROI_VERTICES = numpy.array([[0,119], [0,90], [70,20], [90,20], [159,90], [159,119]], dtype=numpy.int32)
-ROI_MASK = numpy.zeros((120, 160), numpy.uint8)
-cv2.fillConvexPoly(ROI_MASK, ROI_VERTICES, 255)
-
-AREA_THRESHOLD = 0 # Raise to filter out false detections.
-PIXELS_THRESHOLD = 40 # Raise to filter out false detections.
-MAG_THRESHOLD = 4 # Raise to filter out false detections.
 MIXING_RATE = 0.9 # Percentage of a new line detection to mix into current steering.
+
+roi_mask = numpy.zeros((120, 160), numpy.uint8)
+cv2.fillConvexPoly(roi_mask, ROI_VERTICES, 255)
+
 
 # Tweak these values for your robocar.
 THROTTLE_CUT_OFF_ANGLE = 3.0 # Maximum angular distance from 90 before we cut speed [0.0-90.0).
@@ -86,16 +75,12 @@ STEERING_I_MAX = 0.0
 STEERING_D_GAIN = -7 # Make this larger as you increase your speed and vice versa.
 
 # Tweak these values for your robocar.
-#THROTTLE_SERVO_MIN_US = 1500
-#THROTTLE_SERVO_MAX_US = 2000
-THROTTLE_SERVO_MIN_US = 0
-THROTTLE_SERVO_MAX_US = 0.1
+THROTTLE_SERVO_MIN = 0
+THROTTLE_SERVO_MAX = 0.1
 
 # Tweak these values for your robocar.
-#STEERING_SERVO_MIN_US = 700
-#STEERING_SERVO_MAX_US = 2300
-STEERING_SERVO_MIN_US = -1.5
-STEERING_SERVO_MAX_US = 1.5
+STEERING_SERVO_MIN = -1.5
+STEERING_SERVO_MAX = 1.5
 
 ###########
 # Setup
@@ -112,14 +97,14 @@ THROTTLE_OFFSET = max(min(THROTTLE_OFFSET, 100), 0)
 STEERING_OFFSET = max(min(STEERING_OFFSET, 180), 0)
 
 # Handle if these were reversed...
-tmp = max(THROTTLE_SERVO_MIN_US, THROTTLE_SERVO_MAX_US)
-THROTTLE_SERVO_MIN_US = min(THROTTLE_SERVO_MIN_US, THROTTLE_SERVO_MAX_US)
-THROTTLE_SERVO_MAX_US = tmp
+tmp = max(THROTTLE_SERVO_MIN, THROTTLE_SERVO_MAX)
+THROTTLE_SERVO_MIN = min(THROTTLE_SERVO_MIN, THROTTLE_SERVO_MAX)
+THROTTLE_SERVO_MAX = tmp
 
 # Handle if these were reversed...
-tmp = max(STEERING_SERVO_MIN_US, STEERING_SERVO_MAX_US)
-STEERING_SERVO_MIN_US = min(STEERING_SERVO_MIN_US, STEERING_SERVO_MAX_US)
-STEERING_SERVO_MAX_US = tmp
+tmp = max(STEERING_SERVO_MIN, STEERING_SERVO_MAX)
+STEERING_SERVO_MIN = min(STEERING_SERVO_MIN, STEERING_SERVO_MAX)
+STEERING_SERVO_MAX = tmp
 
 # This function maps the output of the linear regression function to a driving vector for steering
 # the robocar. See https://openmv.io/blogs/news/linear-regression-line-following for more info.
@@ -143,22 +128,19 @@ def figure_out_my_steering(line, img):
 t_power = math.log(THROTTLE_CUT_OFF_RATE) / math.log(math.cos(math.radians(THROTTLE_CUT_OFF_ANGLE)))
 
 def figure_out_my_throttle(steering): # steering -> [0:180]
-
     # pow(sin()) of the steering angle is only non-zero when driving straight... e.g. steering ~= 90
     t_result = math.pow(math.sin(math.radians(max(min(steering, 179.99), 0.0))), t_power)
-
     return (t_result * THROTTLE_GAIN) + THROTTLE_OFFSET
 
 #
 # Servo Control Code
 #
 
-# throttle [0:100] (101 values) -> [THROTTLE_SERVO_MIN_US, THROTTLE_SERVO_MAX_US]
-# steering [0:180] (181 values) -> [STEERING_SERVO_MIN_US, STEERING_SERVO_MAX_US]
+# throttle [0:100] (101 values) -> [THROTTLE_SERVO_MIN, THROTTLE_SERVO_MAX]
+# steering [0:180] (181 values) -> [STEERING_SERVO_MIN, STEERING_SERVO_MAX]
 def set_servos(throttle, steering):
-    throttle = THROTTLE_SERVO_MIN_US + ((throttle/100) * (THROTTLE_SERVO_MAX_US - THROTTLE_SERVO_MIN_US))
-    steering = STEERING_SERVO_MIN_US + ((steering/180) * (STEERING_SERVO_MAX_US - STEERING_SERVO_MIN_US))
-    #print(steering, end="")
+    throttle = THROTTLE_SERVO_MIN + ((throttle/100) * (THROTTLE_SERVO_MAX - THROTTLE_SERVO_MIN))
+    steering = STEERING_SERVO_MIN + ((steering/180) * (STEERING_SERVO_MAX - STEERING_SERVO_MIN))
     servo3.set(throttle)
     servo1.set(steering)
 
@@ -210,11 +192,10 @@ frame_cnt = 0
 
 while True:
     clock.tick()
-    #ret, frame = capture.read()
     frame = frame_in
     color_mask = cv2.inRange(frame, COLOR_HIGH_LIGHT_THRESHOLDS_MIN, COLOR_HIGH_LIGHT_THRESHOLDS_MAX)
     res = cv2.bitwise_and(frame, frame, mask=color_mask)
-    res = cv2.bitwise_and(res, res, mask=ROI_MASK)
+    res = cv2.bitwise_and(res, res, mask=roi_mask)
     gray = cv2.cvtColor(res, cv2.COLOR_BGR2GRAY)
     pixelpoints = cv2.findNonZero(gray)
     if pixelpoints is not None:
