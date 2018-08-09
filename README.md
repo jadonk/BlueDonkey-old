@@ -1,14 +1,13 @@
 Latest version is at https://github.com/jadonk/BlueDonkey
 
-Switched to Buster now, so all this needs updating.
-
 # Setup image
 
-Program the following image using Etcher.io:
-* https://debian.beagleboard.org/images/bone-debian-buster-iot-armhf-2018-06-17-4gb.img.xz
+This is based on Debian Buster, which has support for python3-opencv.
 
-Add python3-pygame from sid.
-
+* Program the following image using Etcher.io:
+  * https://debian.beagleboard.org/images/bone-debian-buster-iot-armhf-2018-06-17-4gb.img.xz
+* Add python3-pygame from sid.  See https://www.debian.org/doc/manuals/apt-howto/ch-apt-get.en.html#s-default-version
+* Install other needed python3 packages
 ```sh
 sudo apt-get update
 sudo apt-get install -y python3-pip python3-wheel python3-opencv libopencv-dev
