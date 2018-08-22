@@ -36,10 +36,10 @@ servo3.set(0)
 
 IMG_DIR = "/var/lib/cloud9/mnt"
 # https://pythonprogramming.net/color-filter-python-opencv-tutorial/
-#COLOR_HIGH_LIGHT_THRESHOLDS_MAX = numpy.array([255,255,255])
-#COLOR_HIGH_LIGHT_THRESHOLDS_MIN = numpy.array([230,230,230])
-COLOR_HIGH_LIGHT_THRESHOLDS_MAX = numpy.array([255,190,60])
-COLOR_HIGH_LIGHT_THRESHOLDS_MIN = numpy.array([165,40,0])
+COLOR_HIGH_LIGHT_THRESHOLDS_MAX = numpy.array([255,255,255])
+COLOR_HIGH_LIGHT_THRESHOLDS_MIN = numpy.array([230,230,230])
+#COLOR_HIGH_LIGHT_THRESHOLDS_MAX = numpy.array([255,190,60])
+#COLOR_HIGH_LIGHT_THRESHOLDS_MIN = numpy.array([165,40,0])
 #FRAME_EXPOSURE = 0.000001
 FRAME_EXPOSURE = 0
 BINARY_VIEW = False # Helps debugging but costs FPS if on.
