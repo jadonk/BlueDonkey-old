@@ -35,23 +35,19 @@ servo3.set(0)
 ###########
 
 IMG_DIR = "/var/lib/cloud9/mnt"
-# https://pythonprogramming.net/color-filter-python-opencv-tutorial/
-COLOR_HIGH_LIGHT_THRESHOLDS_MAX = numpy.array([255,255,255])
-COLOR_HIGH_LIGHT_THRESHOLDS_MIN = numpy.array([230,230,230])
-#COLOR_HIGH_LIGHT_THRESHOLDS_MAX = numpy.array([255,190,60])
-#COLOR_HIGH_LIGHT_THRESHOLDS_MIN = numpy.array([165,40,0])
 #FRAME_EXPOSURE = 0.000001
 FRAME_EXPOSURE = 0
 BINARY_VIEW = False # Helps debugging but costs FPS if on.
 #BINARY_VIEW = True # Helps debugging but costs FPS if on.
-FRAME_WIDTH = 160
-FRAME_HEIGHT = 120
+COLOR_THRESHOLD_MIN = 180
+FRAME_WIDTH = 320
+FRAME_HEIGHT = 240
 FRAME_REGION = 0.75 # Percentage of the image from the bottom (0 - 1.0).
 FRAME_WIDE = 1.0 # Percentage of the frame width.
-ROI_VERTICES = numpy.array([[0,119], [0,90], [70,20], [90,20], [159,90], [159,119]], dtype=numpy.int32)
+ROI_VERTICES = numpy.array([[0,FRAME_HEIGHT-1], [0,90], [FRAME_WIDTH/2-10,20], [FRAME_WIDTH/2+10,20], [FRAME_WIDTH-1,90], [FRAME_WIDTH-1,FRAME_HEIGHT-1]], dtype=numpy.int32)
 MIXING_RATE = 0.9 # Percentage of a new line detection to mix into current steering.
 
-roi_mask = numpy.zeros((120, 160), numpy.uint8)
+roi_mask = numpy.zeros((FRAME_HEIGHT, FRAME_WIDTH), numpy.uint8)
 cv2.fillConvexPoly(roi_mask, ROI_VERTICES, 255)
 
 
@@ -155,8 +151,8 @@ capture.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
 if FRAME_EXPOSURE > 0:
     capture.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
     capture.set(cv2.CAP_PROP_EXPOSURE, FRAME_EXPOSURE)
-frame = numpy.zeros((120, 160, 3), dtype=numpy.uint8)
-frame_in = numpy.zeros((120, 160, 3), dtype=numpy.uint8)
+frame = numpy.zeros((FRAME_HEIGHT, FRAME_WIDTH, 3), dtype=numpy.uint8)
+frame_in = numpy.zeros((FRAME_HEIGHT, FRAME_WIDTH, 3), dtype=numpy.uint8)
 
 class cameraThread(threading.Thread):
     def run(self):
@@ -193,11 +189,11 @@ frame_cnt = 0
 while True:
     clock.tick()
     frame = frame_in
-    color_mask = cv2.inRange(frame, COLOR_HIGH_LIGHT_THRESHOLDS_MIN, COLOR_HIGH_LIGHT_THRESHOLDS_MAX)
-    res = cv2.bitwise_and(frame, frame, mask=color_mask)
-    res = cv2.bitwise_and(res, res, mask=roi_mask)
-    gray = cv2.cvtColor(res, cv2.COLOR_BGR2GRAY)
-    pixelpoints = cv2.findNonZero(gray)
+    res = cv2.bitwise_and(frame, frame, mask=roi_mask)
+    gray = res[:, :, 0] # blue only
+    thresh_mask = cv2.inRange(gray, COLOR_THRESHOLD_MIN, 255)
+    res = cv2.bitwise_and(gray, gray, mask=thresh_mask)
+    pixelpoints = cv2.findNonZero(res)
     if pixelpoints is not None:
         vx = 0
         vy = 1
@@ -265,6 +261,6 @@ while True:
         frame_cnt += 1
         cv2.imwrite(frame_file_name, frame)
         if line:
-            res = cv2.line(res, (x,0), (x,119), (0,255,0), 2)
+            res = cv2.line(res, (x,0), (x,FRAME_HEIGHT-1), (0,255,0), 2)
         cv2.imwrite(res_file_name, res)
     print("FPS %05.2f - %s\r" % (clock.get_fps(), print_string), end="")
