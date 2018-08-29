@@ -37,14 +37,14 @@ servo3.set(0)
 IMG_DIR = "/var/lib/cloud9/mnt"
 #FRAME_EXPOSURE = 0.000001
 FRAME_EXPOSURE = 0
-BINARY_VIEW = False # Helps debugging but costs FPS if on.
-#BINARY_VIEW = True # Helps debugging but costs FPS if on.
-COLOR_THRESHOLD_MIN = 180
+#BINARY_VIEW = False # Helps debugging but costs FPS if on.
+BINARY_VIEW = True # Helps debugging but costs FPS if on.
+COLOR_THRESHOLD_MIN = 210
 FRAME_WIDTH = 320
 FRAME_HEIGHT = 240
 FRAME_REGION = 0.75 # Percentage of the image from the bottom (0 - 1.0).
 FRAME_WIDE = 1.0 # Percentage of the frame width.
-ROI_VERTICES = numpy.array([[0,FRAME_HEIGHT-1], [0,90], [FRAME_WIDTH/2-10,20], [FRAME_WIDTH/2+10,20], [FRAME_WIDTH-1,90], [FRAME_WIDTH-1,FRAME_HEIGHT-1]], dtype=numpy.int32)
+ROI_VERTICES = numpy.array([[0,FRAME_HEIGHT-1], [0,FRAME_HEIGHT/2], [FRAME_WIDTH/2-10,FRAME_HEIGHT/3], [FRAME_WIDTH/2+10,FRAME_HEIGHT/3], [FRAME_WIDTH-1,FRAME_HEIGHT/2], [FRAME_WIDTH-1,FRAME_HEIGHT-1]], dtype=numpy.int32)
 MIXING_RATE = 0.9 # Percentage of a new line detection to mix into current steering.
 
 roi_mask = numpy.zeros((FRAME_HEIGHT, FRAME_WIDTH), numpy.uint8)
@@ -261,6 +261,6 @@ while True:
         frame_cnt += 1
         cv2.imwrite(frame_file_name, frame)
         if line:
-            res = cv2.line(res, (x,0), (x,FRAME_HEIGHT-1), (0,255,0), 2)
+            res = cv2.line(res, (x,0), (x,FRAME_HEIGHT-1), (255,255,255), 2)
         cv2.imwrite(res_file_name, res)
     print("FPS %05.2f - %s\r" % (clock.get_fps(), print_string), end="")
