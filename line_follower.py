@@ -44,7 +44,7 @@ FRAME_WIDTH = 320
 FRAME_HEIGHT = 240
 FRAME_REGION = 0.75 # Percentage of the image from the bottom (0 - 1.0).
 FRAME_WIDE = 1.0 # Percentage of the frame width.
-ROI_VERTICES = numpy.array([[0,FRAME_HEIGHT-1], [0,FRAME_HEIGHT/2], [FRAME_WIDTH/2-10,FRAME_HEIGHT/3], [FRAME_WIDTH/2+10,FRAME_HEIGHT/3], [FRAME_WIDTH-1,FRAME_HEIGHT/2], [FRAME_WIDTH-1,FRAME_HEIGHT-1]], dtype=numpy.int32)
+ROI_VERTICES = numpy.array([[0,9*FRAME_HEIGHT/10], [0,FRAME_HEIGHT/2], [FRAME_WIDTH/2-10,FRAME_HEIGHT/3], [FRAME_WIDTH/2+10,FRAME_HEIGHT/3], [FRAME_WIDTH-1,FRAME_HEIGHT/2], [FRAME_WIDTH-1,9*FRAME_HEIGHT/10]], dtype=numpy.int32)
 MIXING_RATE = 0.9 # Percentage of a new line detection to mix into current steering.
 
 roi_mask = numpy.zeros((FRAME_HEIGHT, FRAME_WIDTH), numpy.uint8)
@@ -55,7 +55,7 @@ cv2.fillConvexPoly(roi_mask, ROI_VERTICES, 255)
 THROTTLE_CUT_OFF_ANGLE = 3.0 # Maximum angular distance from 90 before we cut speed [0.0-90.0).
 THROTTLE_CUT_OFF_RATE = 0.8 # How much to cut our speed boost (below) once the above is passed (0.0-1.0].
 THROTTLE_GAIN = 0.0 # e.g. how much to speed up on a straight away
-THROTTLE_OFFSET = 75.0 # e.g. default speed (0 to 100)
+THROTTLE_OFFSET = 65.0 # e.g. default speed (0 to 100)
 THROTTLE_P_GAIN = 1.0
 THROTTLE_I_GAIN = 0.0
 THROTTLE_I_MIN = -0.0
