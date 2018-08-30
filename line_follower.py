@@ -43,14 +43,7 @@ BINARY_VIEW = True # Helps debugging but costs FPS if on.
 COLOR_THRESHOLD_MIN = 210
 FRAME_WIDTH = 320
 FRAME_HEIGHT = 240
-FRAME_REGION = 0.75 # Percentage of the image from the bottom (0 - 1.0).
-FRAME_WIDE = 1.0 # Percentage of the frame width.
-ROI_VERTICES = numpy.array([[0,9*FRAME_HEIGHT/10], [0,FRAME_HEIGHT/2], [FRAME_WIDTH/2-10,FRAME_HEIGHT/3], [FRAME_WIDTH/2+10,FRAME_HEIGHT/3], [FRAME_WIDTH-1,FRAME_HEIGHT/2], [FRAME_WIDTH-1,9*FRAME_HEIGHT/10]], dtype=numpy.int32)
 MIXING_RATE = 0.9 # Percentage of a new line detection to mix into current steering.
-
-roi_mask = numpy.zeros((FRAME_HEIGHT, FRAME_WIDTH), numpy.uint8)
-cv2.fillConvexPoly(roi_mask, ROI_VERTICES, 255)
-
 
 # Tweak these values for your robocar.
 THROTTLE_CUT_OFF_ANGLE = 3.0 # Maximum angular distance from 90 before we cut speed [0.0-90.0).
@@ -79,12 +72,19 @@ THROTTLE_SERVO_MAX = 0.1
 STEERING_SERVO_MIN = -1.5
 STEERING_SERVO_MAX = 1.5
 
+# Array of region of interest masks in the order they should be searched
+# Furthest away first
+roi_masks = numpy.zeros((4, FRAME_HEIGHT, FRAME_WIDTH), numpy.uint8)
+i = 0
+for n in range(6, 10):
+    roi_verticies = numpy.array([[0,n*FRAME_HEIGHT/10], [0,(n+1)*FRAME_HEIGHT/10-1], [FRAME_WIDTH-1,(n+1)*FRAME_HEIGHT/10-1], [FRAME_WIDTH-1,n*FRAME_HEIGHT/10]], dtype=numpy.int32)
+    cv2.fillConvexPoly(roi_masks[i], roi_verticies, 255)
+    i = i + 1
+
 ###########
 # Setup
 ###########
 
-FRAME_REGION = max(min(FRAME_REGION, 1.0), 0.0)
-FRAME_WIDE = max(min(FRAME_WIDE, 1.0), 0.0)
 MIXING_RATE = max(min(MIXING_RATE, 1.0), 0.0)
 
 THROTTLE_CUT_OFF_ANGLE = max(min(THROTTLE_CUT_OFF_ANGLE, 89.99), 0)
@@ -190,18 +190,20 @@ frame_cnt = 0
 while True:
     clock.tick()
     frame = frame_in
-    res = cv2.bitwise_and(frame, frame, mask=roi_mask)
-    gray = res[:, :, 0] # blue only
-    thresh_mask = cv2.inRange(gray, COLOR_THRESHOLD_MIN, 255)
-    res = cv2.bitwise_and(gray, gray, mask=thresh_mask)
-    pixelpoints = cv2.findNonZero(res)
-    if pixelpoints is not None:
-        vx = 0
-        vy = 1
-        x = int(pixelpoints[:,:,0].mean())
-        y = 50
-        line = [vx,vy,x,y]
-    else:
+    blue = frame[:, :, 0] # blue only
+    thresh_mask = cv2.inRange(blue, COLOR_THRESHOLD_MIN, 255)
+    thresh = cv2.bitwise_and(blue, blue, mask=thresh_mask)
+    for roi_mask in roi_masks:
+        res = cv2.bitwise_and(thresh, thresh, mask=roi_mask)
+        pixelpoints = cv2.findNonZero(res)
+        if pixelpoints is not None:
+            vx = 0
+            vy = 1
+            x = int(pixelpoints[:,:,0].mean())
+            y = 50
+            line = [vx,vy,x,y]
+            break
+    if not pixelpoints:
         line = False
 
     print_string = ""
