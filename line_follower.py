@@ -193,18 +193,17 @@ while True:
     blue = frame[:, :, 0] # blue only
     thresh_mask = cv2.inRange(blue, COLOR_THRESHOLD_MIN, 255)
     thresh = cv2.bitwise_and(blue, blue, mask=thresh_mask)
+    line = False
     for roi_mask in roi_masks:
-        res = cv2.bitwise_and(thresh, thresh, mask=roi_mask)
-        pixelpoints = cv2.findNonZero(res)
-        if pixelpoints is not None:
-            vx = 0
-            vy = 1
-            x = int(pixelpoints[:,:,0].mean())
-            y = 50
-            line = [vx,vy,x,y]
-            break
-    if not pixelpoints:
-        line = False
+        if not line:
+            res = cv2.bitwise_and(thresh, thresh, mask=roi_mask)
+            pixelpoints = cv2.findNonZero(res)
+            if pixelpoints is not None:
+                vx = 0
+                vy = 1
+                x = int(pixelpoints[:,:,0].mean())
+                y = 50
+                line = [vx,vy,x,y]
 
     print_string = ""
     if line:
