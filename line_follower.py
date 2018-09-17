@@ -43,7 +43,7 @@ COLOR_THRESHOLD_MIN = 200
 COLOR_THRESHOLD_MAX = 254
 COLOR_THRESHOLD_DELTA = 1
 PERCENT_THRESHOLD_MIN = 0.1
-PERCENT_THRESHOLD_MAX = 5
+PERCENT_THRESHOLD_MAX = 2
 FRAME_WIDTH = 320
 FRAME_HEIGHT = 240
 MIXING_RATE = 0.9 # Percentage of a new line detection to mix into current steering.
@@ -94,7 +94,7 @@ roi_masks = numpy.array([
         # 4/10ths down from the top
         # 4/10ths tall
         [0*FRAME_WIDTH/10, 4*FRAME_HEIGHT/10, 4*FRAME_HEIGHT/10],
-    ], dtype=numpy.int8)
+    ], dtype=numpy.int32)
 
 ###########
 # Setup
@@ -169,15 +169,18 @@ if FRAME_EXPOSURE > 0:
 frame = numpy.zeros((FRAME_HEIGHT, FRAME_WIDTH, 3), dtype=numpy.uint8)
 frame_in = numpy.zeros((FRAME_HEIGHT, FRAME_WIDTH, 3), dtype=numpy.uint8)
 
+cmd = None
+
 class cameraThread(threading.Thread):
     def run(self):
-        global frame, frame_in
+        global frame, frame_in, last_cmd
         while True:            
             ret, frametmp = capture.read()
             if ret:
                 frame_in = frametmp
-            k = cv2.waitKey(5) & 0xFF
+            k = cv2.waitKey(1) & 0xFF
             if k == ord('q'):
+                cmd = 'q'
                 break
 
 thread = cameraThread()
@@ -206,20 +209,20 @@ frame_cnt = 0
 threshold = COLOR_THRESHOLD_MAX
 font = cv2.FONT_HERSHEY_SIMPLEX
 
-while True:
+while not (cmd == 'q'):
     clock.tick()
     line = False
     pixel_cnt = 0
     frame = frame_in
     blue = frame[:, :, 0] # blue only
     thresh_mask = cv2.inRange(blue, threshold, 255)
-    res = cv2.bitwise_and(blue, blue, mask=thresh_mask)
+    thresh = cv2.bitwise_and(blue, blue, mask=thresh_mask)
     for roi_mask in roi_masks:
         if (not line) or (pixel_cnt < pixel_cnt_min):
             # roi_mask[0] pixels in from the sides
             # roi_mask[1] pixels down from the top
             # roi_mask[2] pixels high
-            pixelpoints = cv2.findNonZero(res[roi_mask[1]:roi_mask[1]+roi_mask[2],roi_mask[0]:FRAME_WIDTH-roi_mask[0]-1])
+            pixelpoints = cv2.findNonZero(thresh[ roi_mask[1] : roi_mask[1]+roi_mask[2], roi_mask[0] : ((FRAME_WIDTH-roi_mask[0])-1) ])
             if pixelpoints is not None:
                 pixel_cnt = pixelpoints.size
                 vx = 0
@@ -291,12 +294,13 @@ while True:
 
     set_servos(throttle_output, steering_output)
     if BINARY_VIEW:
-        frame_file_name = "%s/cam%05d.png" % (IMG_DIR, frame_cnt)
-        #res_file_name = "%s/res%05d.png" % (IMG_DIR, frame_cnt)
+        #frame_file_name = "%s/cam%05d.png" % (IMG_DIR, frame_cnt)
+        res_file_name = "%s/res%05d.png" % (IMG_DIR, frame_cnt)
         frame_cnt += 1
-        cv2.imwrite(frame_file_name, frame)
-        cv2.putText(frame, print_string, (10,FRAME_HEIGHT-40), font, 0.4, (255,50,0))
+        #cv2.imwrite(frame_file_name, frame)
+        res = frame
+        cv2.putText(res, print_string, (10,FRAME_HEIGHT-(FRAME_HEIGHT/4)), font, 0.4, (50,50,255))
         if line:
-            res = cv2.line(frame, (x,0), (x,y), (0,255,0), 2)
-        #cv2.imwrite(res_file_name, res)
+            res = cv2.line(res, (x,0), (x,y), (0,255,0), 2)
+        cv2.imwrite(res_file_name, res)
     print("FPS %05.2f - %s\r" % (clock.get_fps(), print_string), end="")
