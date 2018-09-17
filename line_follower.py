@@ -178,10 +178,11 @@ class cameraThread(threading.Thread):
             ret, frametmp = capture.read()
             if ret:
                 frame_in = frametmp
-            k = cv2.waitKey(1) & 0xFF
-            if k == ord('q'):
-                cmd = 'q'
-                break
+            time.sleep(0.0001)
+            #k = cv2.waitKey(1) & 0xFF
+            #if k == ord('q'):
+            #    cmd = 'q'
+            #    break
 
 thread = cameraThread()
 thread.start()
@@ -299,7 +300,7 @@ while not (cmd == 'q'):
         frame_cnt += 1
         #cv2.imwrite(frame_file_name, frame)
         res = frame
-        cv2.putText(res, print_string, (10,FRAME_HEIGHT-(FRAME_HEIGHT/4)), font, 0.4, (50,50,255))
+        cv2.putText(res, print_string, (10,FRAME_HEIGHT-(int(FRAME_HEIGHT/4))), font, 0.4, (50,50,255))
         if line:
             res = cv2.line(res, (x,0), (x,y), (0,255,0), 2)
         cv2.imwrite(res_file_name, res)
