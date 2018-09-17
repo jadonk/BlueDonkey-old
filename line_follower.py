@@ -38,10 +38,9 @@ servo3.set(0)
 IMG_DIR = "/var/lib/cloud9/mnt"
 #FRAME_EXPOSURE = 0.000001
 FRAME_EXPOSURE = 0
-#BINARY_VIEW = False # Helps debugging but costs FPS if on.
-BINARY_VIEW = True # Helps debugging but costs FPS if on.
-COLOR_THRESHOLD_MIN = 180
-COLOR_THRESHOLD_MAX = 245
+BINARY_VIEW = True # Helps debugging but costs FPS if on
+COLOR_THRESHOLD_MIN = 200
+COLOR_THRESHOLD_MAX = 250
 COLOR_THRESHOLD_DELTA = 5
 PERCENT_THRESHOLD_MIN = 0.1
 PERCENT_THRESHOLD_MAX = 5
@@ -78,29 +77,24 @@ STEERING_SERVO_MAX = 1.5
 
 # Array of region of interest masks in the order they should be searched
 # Furthest away first
-j = 3   # Number of regions to scan
-roi_masks = numpy.zeros((j, FRAME_HEIGHT, FRAME_WIDTH), numpy.uint8)
-# Focus on the center
-i = 0   # Index
-n = 5   # Number of 10ths down from the top
-m = 4   # Number of 10ths in from the sides
-p = 1   # Number of 10ths tall
-roi_verticies = numpy.array([[m*FRAME_WIDTH/10,n*FRAME_HEIGHT/10], [m*FRAME_WIDTH/10,(n+p)*FRAME_HEIGHT/10-1], [FRAME_WIDTH-(1+m*FRAME_WIDTH/10),(n+p)*FRAME_HEIGHT/10-1], [FRAME_WIDTH-(1+m*FRAME_WIDTH/10),n*FRAME_HEIGHT/10]], dtype=numpy.int32)
-cv2.fillConvexPoly(roi_masks[i], roi_verticies, 255)
-# Then look wider
-i = 1   # Index
-n = 5   # Number of 10ths down from the top
-m = 2   # Number of 10ths in from the sides
-p = 1   # Number of 10ths tall
-roi_verticies = numpy.array([[m*FRAME_WIDTH/10,n*FRAME_HEIGHT/10], [m*FRAME_WIDTH/10,(n+p)*FRAME_HEIGHT/10-1], [FRAME_WIDTH-(1+m*FRAME_WIDTH/10),(n+p)*FRAME_HEIGHT/10-1], [FRAME_WIDTH-(1+m*FRAME_WIDTH/10),n*FRAME_HEIGHT/10]], dtype=numpy.int32)
-cv2.fillConvexPoly(roi_masks[i], roi_verticies, 255)
-# Then really wide and taller
-i = 2   # Index
-n = 4   # Number of 10ths down from the top
-m = 0   # Number of 10ths in from the sides
-p = 4   # Number of 10ths tall
-roi_verticies = numpy.array([[m*FRAME_WIDTH/10,n*FRAME_HEIGHT/10], [m*FRAME_WIDTH/10,(n+p)*FRAME_HEIGHT/10-1], [FRAME_WIDTH-(1+m*FRAME_WIDTH/10),(n+p)*FRAME_HEIGHT/10-1], [FRAME_WIDTH-(1+m*FRAME_WIDTH/10),n*FRAME_HEIGHT/10]], dtype=numpy.int32)
-cv2.fillConvexPoly(roi_masks[i], roi_verticies, 255)
+roi_masks = numpy.array([
+        # Focus on the center
+        # 4/10ths in from the sides
+        # 5/10ths down from the top
+        # 1/10ths tall
+        [4*FRAME_WIDTH/10, 5*FRAME_HEIGHT/10, 1*FRAME_HEIGHT/10],
+        # Then look wider
+        # 2/10ths in from the sides
+        # 5/10ths down from the top
+        # 1/10ths tall
+        [2*FRAME_WIDTH/10, 5*FRAME_HEIGHT/10, 1*FRAME_HEIGHT/10],
+        # Then really wide and taller
+        # Then look wider
+        # 0/10ths in from the sides
+        # 4/10ths down from the top
+        # 4/10ths tall
+        [2*FRAME_WIDTH/10, 5*FRAME_HEIGHT/10, 1*FRAME_HEIGHT/10],
+    ], dtype=numpy.int8)
 
 ###########
 # Setup
@@ -222,14 +216,16 @@ while True:
     thresh = cv2.bitwise_and(blue, blue, mask=thresh_mask)
     for roi_mask in roi_masks:
         if (not line) or (pixel_cnt < pixel_cnt_min):
-            res = cv2.bitwise_and(thresh, thresh, mask=roi_mask)
-            pixelpoints = cv2.findNonZero(res)
+            # roi_mask[0] pixels in from the sides
+            # roi_mask[1] pixels down from the top
+            # roi_mask[2] pixels high
+            pixelpoints = cv2.findNonZero(res[roi_mask[1]:roi_mask[1]+roi_mask[2],roi_mask[0]:FRAME_WIDTH-roi_mask[0]-1])
             if pixelpoints is not None:
                 pixel_cnt = pixelpoints.size
                 vx = 0
                 vy = 1
-                x = int(pixelpoints[:,:,0].mean())
-                y = 50
+                x = int(pixelpoints[:,:,0].mean() + roi_mask[0])
+                y = int((2*roi_mask[1]+roi_mask[2]) / 2)
                 line = [vx,vy,x,y]
 
     # Adjust threshold if finding too few or too many pixels
