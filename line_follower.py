@@ -40,7 +40,10 @@ IMG_DIR = "/var/lib/cloud9/mnt"
 FRAME_EXPOSURE = 0
 #BINARY_VIEW = False # Helps debugging but costs FPS if on.
 BINARY_VIEW = True # Helps debugging but costs FPS if on.
-COLOR_THRESHOLD_MIN = 240
+COLOR_THRESHOLD_MIN = 180
+COLOR_THRESHOLD_MAX = 245
+PERCENT_THRESHOLD_MIN = 0.1
+PERCENT_THRESHOLD_MAX = 5
 FRAME_WIDTH = 320
 FRAME_HEIGHT = 240
 MIXING_RATE = 0.9 # Percentage of a new line detection to mix into current steering.
@@ -202,25 +205,41 @@ steering_old_result = None
 steering_i_output = 0
 steering_output = STEERING_OFFSET
 
+pixel_cnt_min = FRAME_WIDTH*FRAME_HEIGHT*PERCENT_THRESHOLD_MIN/100
+pixel_cnt_max = FRAME_WIDTH*FRAME_HEIGHT*PERCENT_THRESHOLD_MAX/100
+
 frame_cnt = 0
+threshold = COLOR_THRESHOLD_MIN
 
 while True:
     clock.tick()
+    line = False
+    pixel_cnt = 0
     frame = frame_in
     blue = frame[:, :, 0] # blue only
-    thresh_mask = cv2.inRange(blue, COLOR_THRESHOLD_MIN, 255)
+    thresh_mask = cv2.inRange(blue, threshold, 255)
     thresh = cv2.bitwise_and(blue, blue, mask=thresh_mask)
-    line = False
     for roi_mask in roi_masks:
         if not line:
             res = cv2.bitwise_and(thresh, thresh, mask=roi_mask)
             pixelpoints = cv2.findNonZero(res)
             if pixelpoints is not None:
+                pixel_cnt = pixelpoints.size
                 vx = 0
                 vy = 1
                 x = int(pixelpoints[:,:,0].mean())
                 y = 50
                 line = [vx,vy,x,y]
+
+    # Adjust threshold if finding too few or too many pixels                    
+    if pixel_cnt > pixel_cnt_max:
+        threshold += COLOR_THRESHOLD_DELTA
+        if threshold > COLOR_THRESHOLD_MAX:
+            threshold = COLOR_THRESHOLD_MAX
+    if pixel_cnt < pixel_cnt_min:
+        threshold -= COLOR_THRESHOLD_DELTA
+        if threshold < COLOR_THRESHOLD_MIN:
+            threshold = COLOR_THRESHOLD_MIN
 
     print_string = ""
     if line:
