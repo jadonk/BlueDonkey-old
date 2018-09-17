@@ -93,7 +93,7 @@ roi_masks = numpy.array([
         # 0/10ths in from the sides
         # 4/10ths down from the top
         # 4/10ths tall
-        [2*FRAME_WIDTH/10, 5*FRAME_HEIGHT/10, 1*FRAME_HEIGHT/10],
+        [0*FRAME_WIDTH/10, 4*FRAME_HEIGHT/10, 4*FRAME_HEIGHT/10],
     ], dtype=numpy.int8)
 
 ###########
@@ -213,7 +213,7 @@ while True:
     frame = frame_in
     blue = frame[:, :, 0] # blue only
     thresh_mask = cv2.inRange(blue, threshold, 255)
-    thresh = cv2.bitwise_and(blue, blue, mask=thresh_mask)
+    res = cv2.bitwise_and(blue, blue, mask=thresh_mask)
     for roi_mask in roi_masks:
         if (not line) or (pixel_cnt < pixel_cnt_min):
             # roi_mask[0] pixels in from the sides
