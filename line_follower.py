@@ -39,12 +39,12 @@ servo3.set(0)
 IMG_DIR = "/run/bluedonkey"
 #FRAME_EXPOSURE = 0.000001
 FRAME_EXPOSURE = 0
-BINARY_VIEW = True # Helps debugging but costs FPS if on
+BINARY_VIEW = False # Helps debugging but costs FPS if on
 COLOR_THRESHOLD_MIN = 200
 COLOR_THRESHOLD_MAX = 254
 COLOR_THRESHOLD_DELTA = 1
 PERCENT_THRESHOLD_MIN = 0.1
-PERCENT_THRESHOLD_MAX = 2
+PERCENT_THRESHOLD_MAX = 1
 FRAME_WIDTH = 320
 FRAME_HEIGHT = 240
 MIXING_RATE = 0.9 # Percentage of a new line detection to mix into current steering.
@@ -179,7 +179,7 @@ class cameraThread(threading.Thread):
             ret, frametmp = capture.read()
             if ret:
                 frame_in = frametmp
-            time.sleep(0.0001)
+            time.sleep(0.03)
             #k = cv2.waitKey(1) & 0xFF
             #if k == ord('q'):
             #    cmd = 'q'
