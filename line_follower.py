@@ -35,7 +35,8 @@ servo3.set(0)
 # Settings
 ###########
 
-IMG_DIR = "/var/lib/cloud9/mnt"
+#IMG_DIR = "/var/lib/cloud9/mnt"
+IMG_DIR = "/run/bluedonkey"
 #FRAME_EXPOSURE = 0.000001
 FRAME_EXPOSURE = 0
 BINARY_VIEW = True # Helps debugging but costs FPS if on
@@ -300,7 +301,7 @@ while not (cmd == 'q'):
         frame_cnt += 1
         #cv2.imwrite(frame_file_name, frame)
         res = frame
-        cv2.putText(res, print_string, (10,FRAME_HEIGHT-(int(FRAME_HEIGHT/4))), font, 0.4, (50,50,255))
+        cv2.putText(res, print_string, (10,FRAME_HEIGHT-(int(FRAME_HEIGHT/4))), font, 0.4, (150,150,255))
         if line:
             res = cv2.line(res, (x,0), (x,y), (0,255,0), 2)
         cv2.imwrite(res_file_name, res)
