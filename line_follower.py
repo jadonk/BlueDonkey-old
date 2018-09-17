@@ -39,7 +39,7 @@ servo3.set(0)
 IMG_DIR = "/run/bluedonkey"
 #FRAME_EXPOSURE = 0.000001
 FRAME_EXPOSURE = 0
-BINARY_VIEW = False # Helps debugging but costs FPS if on
+BINARY_VIEW = True # Helps debugging but costs FPS if on
 COLOR_THRESHOLD_MIN = 200
 COLOR_THRESHOLD_MAX = 254
 COLOR_THRESHOLD_DELTA = 1
@@ -78,23 +78,25 @@ STEERING_SERVO_MAX = 1.5
 
 # Array of region of interest masks in the order they should be searched
 # Furthest away first
+ROI_Y_OFFSET = int(4*FRAME_HEIGHT/10)
+ROI_Y_MAX = int(8*FRAME_HEIGHT/10)
 roi_masks = numpy.array([
         # Focus on the center
         # 4/10ths in from the sides
         # 5/10ths down from the top
         # 1/10ths tall
-        [4*FRAME_WIDTH/10, 5*FRAME_HEIGHT/10, 1*FRAME_HEIGHT/10],
+        [int(4*FRAME_WIDTH/10), int(5*FRAME_HEIGHT/10)-ROI_Y_OFFSET, int(1*FRAME_HEIGHT/10)],
         # Then look wider
         # 2/10ths in from the sides
         # 5/10ths down from the top
         # 1/10ths tall
-        [2*FRAME_WIDTH/10, 5*FRAME_HEIGHT/10, 1*FRAME_HEIGHT/10],
+        [int(2*FRAME_WIDTH/10), int(5*FRAME_HEIGHT/10)-ROI_Y_OFFSET, int(1*FRAME_HEIGHT/10)],
         # Then really wide and taller
         # Then look wider
         # 0/10ths in from the sides
         # 4/10ths down from the top
         # 4/10ths tall
-        [0*FRAME_WIDTH/10, 4*FRAME_HEIGHT/10, 4*FRAME_HEIGHT/10],
+        [int(0*FRAME_WIDTH/10), int(4*FRAME_HEIGHT/10)-ROI_Y_OFFSET, int(4*FRAME_HEIGHT/10)],
     ], dtype=numpy.int32)
 
 ###########
@@ -216,21 +218,21 @@ while not (cmd == 'q'):
     line = False
     pixel_cnt = 0
     frame = frame_in
-    blue = frame[:, :, 0] # blue only
+    blue = frame[ROI_Y_OFFSET:ROI_Y_OFFSET+ROI_Y_MAX, 0:FRAME_WIDTH-1, 0] # blue only and in outer ROI
     thresh_mask = cv2.inRange(blue, threshold, 255)
     thresh = cv2.bitwise_and(blue, blue, mask=thresh_mask)
     for roi_mask in roi_masks:
+        # roi_mask[0] pixels in from the sides
+        # roi_mask[1] pixels down from the top
+        # roi_mask[2] pixels high
         if (not line) or (pixel_cnt < pixel_cnt_min):
-            # roi_mask[0] pixels in from the sides
-            # roi_mask[1] pixels down from the top
-            # roi_mask[2] pixels high
-            pixelpoints = cv2.findNonZero(thresh[ roi_mask[1] : roi_mask[1]+roi_mask[2], roi_mask[0] : ((FRAME_WIDTH-roi_mask[0])-1) ])
+            pixelpoints = cv2.findNonZero(thresh[ roi_mask[1]-ROI_Y_OFFSET : roi_mask[1]+roi_mask[2], roi_mask[0] : ((FRAME_WIDTH-roi_mask[0])-1) ])
             if pixelpoints is not None:
                 pixel_cnt = pixelpoints.size
                 vx = 0
                 vy = 1
+                y = ROI_Y_OFFSET + int((2*roi_mask[1]+roi_mask[2]) / 2)
                 x = int(pixelpoints[:,:,0].mean()) + roi_mask[0]
-                y = int((2*roi_mask[1]+roi_mask[2]) / 2)
                 line = [vx,vy,x,y]
 
     # Adjust threshold if finding too few or too many pixels
