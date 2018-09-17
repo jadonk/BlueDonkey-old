@@ -42,6 +42,7 @@ FRAME_EXPOSURE = 0
 BINARY_VIEW = True # Helps debugging but costs FPS if on.
 COLOR_THRESHOLD_MIN = 180
 COLOR_THRESHOLD_MAX = 245
+COLOR_THRESHOLD_DELTA = 5
 PERCENT_THRESHOLD_MIN = 0.1
 PERCENT_THRESHOLD_MAX = 5
 FRAME_WIDTH = 320
@@ -209,7 +210,7 @@ pixel_cnt_min = FRAME_WIDTH*FRAME_HEIGHT*PERCENT_THRESHOLD_MIN/100
 pixel_cnt_max = FRAME_WIDTH*FRAME_HEIGHT*PERCENT_THRESHOLD_MAX/100
 
 frame_cnt = 0
-threshold = COLOR_THRESHOLD_MIN
+threshold = COLOR_THRESHOLD_MAX
 
 while True:
     clock.tick()
@@ -220,7 +221,7 @@ while True:
     thresh_mask = cv2.inRange(blue, threshold, 255)
     thresh = cv2.bitwise_and(blue, blue, mask=thresh_mask)
     for roi_mask in roi_masks:
-        if not line:
+        if (not line) or (pixel_cnt < pixel_cnt_min):
             res = cv2.bitwise_and(thresh, thresh, mask=roi_mask)
             pixelpoints = cv2.findNonZero(res)
             if pixelpoints is not None:
@@ -231,7 +232,7 @@ while True:
                 y = 50
                 line = [vx,vy,x,y]
 
-    # Adjust threshold if finding too few or too many pixels                    
+    # Adjust threshold if finding too few or too many pixels
     if pixel_cnt > pixel_cnt_max:
         threshold += COLOR_THRESHOLD_DELTA
         if threshold > COLOR_THRESHOLD_MAX:
