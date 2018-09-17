@@ -74,7 +74,7 @@ STEERING_SERVO_MAX = 1.5
 
 # Array of region of interest masks in the order they should be searched
 # Furthest away first
-j = 4   # Number of regions to scan
+j = 2   # Number of regions to scan
 roi_masks = numpy.zeros((j, FRAME_HEIGHT, FRAME_WIDTH), numpy.uint8)
 i = 0   # Index
 n = 5   # Number of 10ths down from the top
@@ -82,20 +82,21 @@ m = 4   # Number of 10ths in from the sides
 roi_verticies = numpy.array([[m*FRAME_WIDTH/10,n*FRAME_HEIGHT/10], [m*FRAME_WIDTH/10,(n+1)*FRAME_HEIGHT/10-1], [FRAME_WIDTH-(1+m*FRAME_WIDTH/10),(n+1)*FRAME_HEIGHT/10-1], [FRAME_WIDTH-(1+m*FRAME_WIDTH/10),n*FRAME_HEIGHT/10]], dtype=numpy.int32)
 cv2.fillConvexPoly(roi_masks[i], roi_verticies, 255)
 i = 1   # Index
-n = 6   # Number of 10ths down from the top
-m = 4   # Number of 10ths in from the sides
-roi_verticies = numpy.array([[m*FRAME_WIDTH/10,n*FRAME_HEIGHT/10], [m*FRAME_WIDTH/10,(n+1)*FRAME_HEIGHT/10-1], [FRAME_WIDTH-(1+m*FRAME_WIDTH/10),(n+1)*FRAME_HEIGHT/10-1], [FRAME_WIDTH-(1+m*FRAME_WIDTH/10),n*FRAME_HEIGHT/10]], dtype=numpy.int32)
-cv2.fillConvexPoly(roi_masks[i], roi_verticies, 255)
-i = 2   # Index
-n = 5   # Number of 10ths down from the top
-m = 2   # Number of 10ths in from the sides
-roi_verticies = numpy.array([[m*FRAME_WIDTH/10,n*FRAME_HEIGHT/10], [m*FRAME_WIDTH/10,(n+1)*FRAME_HEIGHT/10-1], [FRAME_WIDTH-(1+m*FRAME_WIDTH/10),(n+1)*FRAME_HEIGHT/10-1], [FRAME_WIDTH-(1+m*FRAME_WIDTH/10),n*FRAME_HEIGHT/10]], dtype=numpy.int32)
-cv2.fillConvexPoly(roi_masks[i], roi_verticies, 255)
-i = 3   # Index
-n = 6   # Number of 10ths down from the top
-m = 2   # Number of 10ths in from the sides
-roi_verticies = numpy.array([[m*FRAME_WIDTH/10,n*FRAME_HEIGHT/10], [m*FRAME_WIDTH/10,(n+1)*FRAME_HEIGHT/10-1], [FRAME_WIDTH-(1+m*FRAME_WIDTH/10),(n+1)*FRAME_HEIGHT/10-1], [FRAME_WIDTH-(1+m*FRAME_WIDTH/10),n*FRAME_HEIGHT/10]], dtype=numpy.int32)
-cv2.fillConvexPoly(roi_masks[i], roi_verticies, 255)
+n = 4   # Number of 10ths down from the top
+m = 0   # Number of 10ths in from the sides
+if False:
+    roi_verticies = numpy.array([[m*FRAME_WIDTH/10,n*FRAME_HEIGHT/10], [m*FRAME_WIDTH/10,(n+1)*FRAME_HEIGHT/10-1], [FRAME_WIDTH-(1+m*FRAME_WIDTH/10),(n+1)*FRAME_HEIGHT/10-1], [FRAME_WIDTH-(1+m*FRAME_WIDTH/10),n*FRAME_HEIGHT/10]], dtype=numpy.int32)
+    cv2.fillConvexPoly(roi_masks[i], roi_verticies, 255)
+    i = 2   # Index
+    n = 5   # Number of 10ths down from the top
+    m = 2   # Number of 10ths in from the sides
+    roi_verticies = numpy.array([[m*FRAME_WIDTH/10,n*FRAME_HEIGHT/10], [m*FRAME_WIDTH/10,(n+1)*FRAME_HEIGHT/10-1], [FRAME_WIDTH-(1+m*FRAME_WIDTH/10),(n+1)*FRAME_HEIGHT/10-1], [FRAME_WIDTH-(1+m*FRAME_WIDTH/10),n*FRAME_HEIGHT/10]], dtype=numpy.int32)
+    cv2.fillConvexPoly(roi_masks[i], roi_verticies, 255)
+    i = 3   # Index
+    n = 6   # Number of 10ths down from the top
+    m = 2   # Number of 10ths in from the sides
+    roi_verticies = numpy.array([[m*FRAME_WIDTH/10,n*FRAME_HEIGHT/10], [m*FRAME_WIDTH/10,(n+1)*FRAME_HEIGHT/10-1], [FRAME_WIDTH-(1+m*FRAME_WIDTH/10),(n+1)*FRAME_HEIGHT/10-1], [FRAME_WIDTH-(1+m*FRAME_WIDTH/10),n*FRAME_HEIGHT/10]], dtype=numpy.int32)
+    cv2.fillConvexPoly(roi_masks[i], roi_verticies, 255)
 
 ###########
 # Setup
