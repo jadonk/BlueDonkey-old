@@ -40,8 +40,8 @@ IMG_DIR = "/var/lib/cloud9/mnt"
 FRAME_EXPOSURE = 0
 BINARY_VIEW = True # Helps debugging but costs FPS if on
 COLOR_THRESHOLD_MIN = 200
-COLOR_THRESHOLD_MAX = 250
-COLOR_THRESHOLD_DELTA = 5
+COLOR_THRESHOLD_MAX = 254
+COLOR_THRESHOLD_DELTA = 1
 PERCENT_THRESHOLD_MIN = 0.1
 PERCENT_THRESHOLD_MAX = 5
 FRAME_WIDTH = 320
@@ -125,9 +125,8 @@ old_cx_normal = None
 def figure_out_my_steering(line, img):
     global old_cx_normal
     [vx,vy,x,y] = line
-    height, width, layers = img.shape
-    cx_middle = x - (width / 2)
-    cx_normal = cx_middle / (width / 2)
+    cx_middle = x - (FRAME_WIDTH / 2)
+    cx_normal = cx_middle / (FRAME_WIDTH / 2)
 
     if old_cx_normal != None:
         old_cx_normal = (cx_normal * MIXING_RATE) + (old_cx_normal * (1.0 - MIXING_RATE))
@@ -205,6 +204,7 @@ pixel_cnt_max = FRAME_WIDTH*FRAME_HEIGHT*PERCENT_THRESHOLD_MAX/100
 
 frame_cnt = 0
 threshold = COLOR_THRESHOLD_MAX
+font = cv2.FONT_HERSHEY_SIMPLEX
 
 while True:
     clock.tick()
@@ -224,7 +224,7 @@ while True:
                 pixel_cnt = pixelpoints.size
                 vx = 0
                 vy = 1
-                x = int(pixelpoints[:,:,0].mean() + roi_mask[0])
+                x = int(pixelpoints[:,:,0].mean()) + roi_mask[0]
                 y = int((2*roi_mask[1]+roi_mask[2]) / 2)
                 line = [vx,vy,x,y]
 
@@ -281,21 +281,22 @@ while True:
         # Throttle goes from 0% to 100%.
         throttle_output = max(min(throttle_pid_output, 100), 0)
 
-        print_string = "Line Ok   - throttle %03d, steering %03d, frame %05d" % \
-            (throttle_output , steering_output, frame_cnt)
+        print_string = " %03d turn %03d gas %03d lvl %03d i %05d" % \
+            (x, steering_output, throttle_output, threshold, frame_cnt)
 
     else:
         throttle_output = throttle_output * 0.99
-        print_string = "Line Lost - throttle %03d, steering %03d, frame %05d" % \
-            (throttle_output , steering_output, frame_cnt)
+        print_string = "Lost turn %03d gas %03d lvl %03d i %05d" % \
+            (steering_output, throttle_output, threshold, frame_cnt)
 
     set_servos(throttle_output, steering_output)
     if BINARY_VIEW:
         frame_file_name = "%s/cam%05d.png" % (IMG_DIR, frame_cnt)
-        res_file_name = "%s/res%05d.png" % (IMG_DIR, frame_cnt)
+        #res_file_name = "%s/res%05d.png" % (IMG_DIR, frame_cnt)
         frame_cnt += 1
         cv2.imwrite(frame_file_name, frame)
+        cv2.putText(frame, print_string, (10,FRAME_HEIGHT-40), font, 0.4, (255,50,0))
         if line:
-            res = cv2.line(res, (x,0), (x,FRAME_HEIGHT-1), (255,255,255), 2)
-        cv2.imwrite(res_file_name, res)
+            res = cv2.line(frame, (x,0), (x,y), (0,255,0), 2)
+        #cv2.imwrite(res_file_name, res)
     print("FPS %05.2f - %s\r" % (clock.get_fps(), print_string), end="")
