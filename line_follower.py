@@ -43,8 +43,8 @@ BINARY_VIEW = True # Helps debugging but costs FPS if on
 COLOR_THRESHOLD_MIN = 160
 COLOR_THRESHOLD_MAX = 254
 COLOR_THRESHOLD_DELTA = 1
-PERCENT_THRESHOLD_MIN = 0.05
-PERCENT_THRESHOLD_MAX = 1
+PERCENT_THRESHOLD_MIN = 2
+PERCENT_THRESHOLD_MAX = 20
 FRAME_WIDTH = 320
 FRAME_HEIGHT = 240
 MIXING_RATE = 0.9 # Percentage of a new line detection to mix into current steering.
@@ -85,18 +85,21 @@ roi_masks = numpy.array([
         # 8/20ths in from the sides
         # 10/20ths down from the top
         # 1/20ths tall
-        [int(8*FRAME_WIDTH/20), int(10*FRAME_HEIGHT/20)-ROI_Y_OFFSET, int(1*FRAME_HEIGHT/20)],
+        # 4x1 pixel count
+        [int(8*FRAME_WIDTH/20), int(10*FRAME_HEIGHT/20)-ROI_Y_OFFSET, int(1*FRAME_HEIGHT/20), int((4*FRAME_WIDTH/20)*(1*FRAME_HEIGHT/20)/100)],
         # Then look wider
         # 4/20ths in from the sides
         # 10/20ths down from the top
-        # 1/10ths tall
-        [int(4*FRAME_WIDTH/20), int(10*FRAME_HEIGHT/20)-ROI_Y_OFFSET, int(1*FRAME_HEIGHT/20)],
+        # 1/20ths tall
+        # 12x1 pixel count
+        [int(4*FRAME_WIDTH/20), int(10*FRAME_HEIGHT/20)-ROI_Y_OFFSET, int(1*FRAME_HEIGHT/20), int((12*FRAME_WIDTH/20)*(1*FRAME_HEIGHT/20)/100)],
         # Then really wide and taller
         # Then look wider
         # 0/20ths in from the sides
         # 10/20ths down from the top
         # 4/20ths tall
-        [int(0*FRAME_WIDTH/10), int(10*FRAME_HEIGHT/20)-ROI_Y_OFFSET, int(4*FRAME_HEIGHT/20)],
+        # 20x4 pixel count
+        [int(0*FRAME_WIDTH/10), int(10*FRAME_HEIGHT/20)-ROI_Y_OFFSET, int(4*FRAME_HEIGHT/20), int((20*FRAME_WIDTH/20)*(4*FRAME_HEIGHT/20)/100)],
     ], dtype=numpy.int32)
 
 ###########
@@ -206,9 +209,6 @@ steering_old_result = None
 steering_i_output = 0
 steering_output = STEERING_OFFSET
 
-pixel_cnt_min = FRAME_WIDTH*FRAME_HEIGHT*PERCENT_THRESHOLD_MIN/100
-pixel_cnt_max = FRAME_WIDTH*FRAME_HEIGHT*PERCENT_THRESHOLD_MAX/100
-
 frame_cnt = 0
 threshold = COLOR_THRESHOLD_MAX
 font = cv2.FONT_HERSHEY_SIMPLEX
@@ -217,6 +217,8 @@ while not (cmd == 'q'):
     clock.tick()
     line = False
     pixel_cnt = 0
+    pixel_cnt_min = 0
+    pixel_cnt_max = 4000000
     frame = frame_in
     res = frame
     blue = frame[ROI_Y_OFFSET:ROI_Y_OFFSET+ROI_Y_MAX-1, 0:FRAME_WIDTH-1, 0] # blue only and in outer ROI
@@ -231,6 +233,8 @@ while not (cmd == 'q'):
             pixelpoints = cv2.findNonZero(thresh_crop)
             if pixelpoints is not None:
                 pixel_cnt = pixelpoints.size
+                pixel_cnt_min = int(PERCENT_THRESHOLD_MIN*roi_mask[3])
+                pixel_cnt_max = int(PERCENT_THRESHOLD_MAX*roi_mask[3])
                 vx = 0
                 vy = 1
                 y = ROI_Y_OFFSET + int((2*roi_mask[1]+roi_mask[2]) / 2)
