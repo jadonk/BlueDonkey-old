@@ -40,10 +40,10 @@ IMG_DIR = "/run/bluedonkey"
 #FRAME_EXPOSURE = 0.000001
 FRAME_EXPOSURE = 0
 BINARY_VIEW = True # Helps debugging but costs FPS if on
-COLOR_THRESHOLD_MIN = 200
+COLOR_THRESHOLD_MIN = 160
 COLOR_THRESHOLD_MAX = 254
 COLOR_THRESHOLD_DELTA = 1
-PERCENT_THRESHOLD_MIN = 0.1
+PERCENT_THRESHOLD_MIN = 0.05
 PERCENT_THRESHOLD_MAX = 1
 FRAME_WIDTH = 320
 FRAME_HEIGHT = 240
@@ -78,25 +78,25 @@ STEERING_SERVO_MAX = 1.5
 
 # Array of region of interest masks in the order they should be searched
 # Furthest away first
-ROI_Y_OFFSET = int(4*FRAME_HEIGHT/10)
-ROI_Y_MAX = int(8*FRAME_HEIGHT/10)
+ROI_Y_OFFSET = int(8*FRAME_HEIGHT/20)
+ROI_Y_MAX = int(12*FRAME_HEIGHT/20)
 roi_masks = numpy.array([
         # Focus on the center
-        # 4/10ths in from the sides
-        # 5/10ths down from the top
-        # 1/10ths tall
-        [int(4*FRAME_WIDTH/10), int(5*FRAME_HEIGHT/10)-ROI_Y_OFFSET, int(1*FRAME_HEIGHT/10)],
+        # 8/20ths in from the sides
+        # 10/20ths down from the top
+        # 1/20ths tall
+        [int(8*FRAME_WIDTH/20), int(10*FRAME_HEIGHT/20)-ROI_Y_OFFSET, int(1*FRAME_HEIGHT/20)],
         # Then look wider
-        # 2/10ths in from the sides
-        # 5/10ths down from the top
+        # 4/20ths in from the sides
+        # 10/20ths down from the top
         # 1/10ths tall
-        [int(2*FRAME_WIDTH/10), int(5*FRAME_HEIGHT/10)-ROI_Y_OFFSET, int(1*FRAME_HEIGHT/10)],
+        [int(4*FRAME_WIDTH/20), int(10*FRAME_HEIGHT/20)-ROI_Y_OFFSET, int(1*FRAME_HEIGHT/20)],
         # Then really wide and taller
         # Then look wider
-        # 0/10ths in from the sides
-        # 4/10ths down from the top
-        # 4/10ths tall
-        [int(0*FRAME_WIDTH/10), int(4*FRAME_HEIGHT/10)-ROI_Y_OFFSET, int(4*FRAME_HEIGHT/10)],
+        # 0/20ths in from the sides
+        # 10/20ths down from the top
+        # 4/20ths tall
+        [int(0*FRAME_WIDTH/10), int(10*FRAME_HEIGHT/20)-ROI_Y_OFFSET, int(4*FRAME_HEIGHT/20)],
     ], dtype=numpy.int32)
 
 ###########
@@ -218,6 +218,7 @@ while not (cmd == 'q'):
     line = False
     pixel_cnt = 0
     frame = frame_in
+    res = frame
     blue = frame[ROI_Y_OFFSET:ROI_Y_OFFSET+ROI_Y_MAX, 0:FRAME_WIDTH-1, 0] # blue only and in outer ROI
     thresh_mask = cv2.inRange(blue, threshold, 255)
     thresh = cv2.bitwise_and(blue, blue, mask=thresh_mask)
@@ -226,7 +227,8 @@ while not (cmd == 'q'):
         # roi_mask[1] pixels down from the top
         # roi_mask[2] pixels high
         if (not line) or (pixel_cnt < pixel_cnt_min):
-            pixelpoints = cv2.findNonZero(thresh[ roi_mask[1]-ROI_Y_OFFSET : roi_mask[1]+roi_mask[2], roi_mask[0] : ((FRAME_WIDTH-roi_mask[0])-1) ])
+            thresh_crop = thresh[ roi_mask[1]-ROI_Y_OFFSET : roi_mask[1]+roi_mask[2] , roi_mask[0] : ((FRAME_WIDTH-roi_mask[0])-1) ]
+            pixelpoints = cv2.findNonZero(thresh_crop)
             if pixelpoints is not None:
                 pixel_cnt = pixelpoints.size
                 vx = 0
@@ -234,6 +236,9 @@ while not (cmd == 'q'):
                 y = ROI_Y_OFFSET + int((2*roi_mask[1]+roi_mask[2]) / 2)
                 x = int(pixelpoints[:,:,0].mean()) + roi_mask[0]
                 line = [vx,vy,x,y]
+                if BINARY_VIEW:
+                    thresh_color = cv2.cvtColor(thresh_crop, cv2.COLOR_GRAY2BGR)
+                    res[ ROI_Y_OFFSET+roi_mask[1] : ROI_Y_OFFSET+roi_mask[1]+roi_mask[2] , roi_mask[0] : ((FRAME_WIDTH-roi_mask[0])-1) ] = thresh_color
 
     # Adjust threshold if finding too few or too many pixels
     if pixel_cnt > pixel_cnt_max:
@@ -302,7 +307,6 @@ while not (cmd == 'q'):
         res_file_name = "%s/res%05d.png" % (IMG_DIR, frame_cnt)
         frame_cnt += 1
         #cv2.imwrite(frame_file_name, frame)
-        res = frame
         cv2.putText(res, print_string, (10,FRAME_HEIGHT-(int(FRAME_HEIGHT/4))), font, 0.4, (150,150,255))
         if line:
             res = cv2.line(res, (x,0), (x,y), (0,255,0), 2)
