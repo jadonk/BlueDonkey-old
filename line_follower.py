@@ -219,7 +219,7 @@ while not (cmd == 'q'):
     pixel_cnt = 0
     frame = frame_in
     res = frame
-    blue = frame[ROI_Y_OFFSET:ROI_Y_OFFSET+ROI_Y_MAX, 0:FRAME_WIDTH-1, 0] # blue only and in outer ROI
+    blue = frame[ROI_Y_OFFSET:ROI_Y_OFFSET+ROI_Y_MAX-1, 0:FRAME_WIDTH-1, 0] # blue only and in outer ROI
     thresh_mask = cv2.inRange(blue, threshold, 255)
     thresh = cv2.bitwise_and(blue, blue, mask=thresh_mask)
     for roi_mask in roi_masks:
@@ -227,7 +227,7 @@ while not (cmd == 'q'):
         # roi_mask[1] pixels down from the top
         # roi_mask[2] pixels high
         if (not line) or (pixel_cnt < pixel_cnt_min):
-            thresh_crop = thresh[ roi_mask[1]-ROI_Y_OFFSET : roi_mask[1]+roi_mask[2] , roi_mask[0] : ((FRAME_WIDTH-roi_mask[0])-1) ]
+            thresh_crop = thresh[ roi_mask[1] : roi_mask[1]+roi_mask[2]-1 , roi_mask[0] : FRAME_WIDTH-roi_mask[0]-1 ]
             pixelpoints = cv2.findNonZero(thresh_crop)
             if pixelpoints is not None:
                 pixel_cnt = pixelpoints.size
@@ -238,7 +238,7 @@ while not (cmd == 'q'):
                 line = [vx,vy,x,y]
                 if BINARY_VIEW:
                     thresh_color = cv2.cvtColor(thresh_crop, cv2.COLOR_GRAY2BGR)
-                    res[ ROI_Y_OFFSET+roi_mask[1] : ROI_Y_OFFSET+roi_mask[1]+roi_mask[2] , roi_mask[0] : ((FRAME_WIDTH-roi_mask[0])-1) ] = thresh_color
+                    res[ ROI_Y_OFFSET+roi_mask[1] : ROI_Y_OFFSET+roi_mask[1]+roi_mask[2]-1 , roi_mask[0] : ((FRAME_WIDTH-roi_mask[0])-1) ] = thresh_color
 
     # Adjust threshold if finding too few or too many pixels
     if pixel_cnt > pixel_cnt_max:
