@@ -217,12 +217,13 @@ while not (cmd == 'q'):
     pixel_cnt = 0
     pixel_cnt_min = 0
     pixel_cnt_max = 4000000
+    # Go from 320x240 to 160x120 and make a copy
     frame = frame_in[::2,::2].copy()
-    res = frame
     for roi_mask in roi_masks:
         # roi_mask[0] pixels in from the sides
         # roi_mask[1] pixels down from the top
         # roi_mask[2] pixels high
+        # roi_mask[3] number of pixels / 100
         if (not line) or (pixel_cnt < pixel_cnt_min):
             # Extract blue only in ROI
             blue = frame[ roi_mask[1] : roi_mask[1]+roi_mask[2]-1 , roi_mask[0] : FRAME_WIDTH-roi_mask[0]-1 , 0 ]
@@ -241,7 +242,7 @@ while not (cmd == 'q'):
                 line = [vx,vy,x,y]
                 if BINARY_VIEW:
                     thresh_color = cv2.cvtColor(thresh_mask, cv2.COLOR_GRAY2BGR)
-                    res[ roi_mask[1] : roi_mask[1]+roi_mask[2]-1 , roi_mask[0] : ((FRAME_WIDTH-roi_mask[0])-1) ] = thresh_color
+                    frame[ roi_mask[1] : roi_mask[1]+roi_mask[2]-1 , roi_mask[0] : ((FRAME_WIDTH-roi_mask[0])-1) ] = thresh_color
 
     # Adjust threshold if finding too few or too many pixels
     if pixel_cnt > pixel_cnt_max:
@@ -296,12 +297,12 @@ while not (cmd == 'q'):
         # Throttle goes from 0% to 100%.
         throttle_output = max(min(throttle_pid_output, 100), 0)
 
-        print_string = " %03d turn %03d gas %03d lvl %03d i %05d" % \
+        print_string = " %03d %03d %03d %03d %05d" % \
             (x, steering_output, throttle_output, threshold, frame_cnt)
 
     else:
         throttle_output = throttle_output * 0.99
-        print_string = "Lost turn %03d gas %03d lvl %03d i %05d" % \
+        print_string = "Lost %03d %03d %03d %05d" % \
             (steering_output, throttle_output, threshold, frame_cnt)
 
     set_servos(throttle_output, steering_output)
@@ -310,8 +311,8 @@ while not (cmd == 'q'):
         res_file_name = "%s/res%05d.png" % (IMG_DIR, frame_cnt)
         frame_cnt += 1
         #cv2.imwrite(frame_file_name, frame)
-        cv2.putText(res, print_string, (10,FRAME_HEIGHT-(int(FRAME_HEIGHT/4))), font, 0.2, (150,150,255))
+        cv2.putText(frame, print_string, (10,FRAME_HEIGHT-(int(FRAME_HEIGHT/4))), font, 0.3, (150,150,255))
         if line:
-            res = cv2.line(res, (x,0), (x,y), (0,255,0), 2)
-        cv2.imwrite(res_file_name, res)
+            frame = cv2.line(frame, (x,0), (x,y), (0,255,0), 2)
+        cv2.imwrite(res_file_name, frame)
     print("FPS %05.2f - %s\r" % (clock.get_fps(), print_string), end="")
