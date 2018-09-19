@@ -42,11 +42,11 @@ FRAME_EXPOSURE = 0
 BINARY_VIEW = True # Helps debugging but costs FPS if on
 COLOR_THRESHOLD_MIN = 160
 COLOR_THRESHOLD_MAX = 254
-COLOR_THRESHOLD_DELTA = 1
+COLOR_THRESHOLD_DELTA = 4
 PERCENT_THRESHOLD_MIN = 2
 PERCENT_THRESHOLD_MAX = 20
-FRAME_WIDTH = 320
-FRAME_HEIGHT = 240
+FRAME_WIDTH = 160
+FRAME_HEIGHT = 120
 MIXING_RATE = 0.9 # Percentage of a new line detection to mix into current steering.
 
 # Tweak these values for your robocar.
@@ -70,7 +70,7 @@ STEERING_D_GAIN = -7 # Make this larger as you increase your speed and vice vers
 
 # Tweak these values for your robocar.
 THROTTLE_SERVO_MIN = 0
-THROTTLE_SERVO_MAX = 0.1
+THROTTLE_SERVO_MAX = 0.12
 
 # Tweak these values for your robocar.
 STEERING_SERVO_MIN = -1.5
@@ -167,13 +167,13 @@ def set_servos(throttle, steering):
 
 capture = cv2.VideoCapture(0)
 capture.set(cv2.CAP_PROP_FPS, 30)
-capture.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH)
-capture.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
+capture.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH*2)
+capture.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT*2)
 if FRAME_EXPOSURE > 0:
     capture.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
     capture.set(cv2.CAP_PROP_EXPOSURE, FRAME_EXPOSURE)
 frame = numpy.zeros((FRAME_HEIGHT, FRAME_WIDTH, 3), dtype=numpy.uint8)
-frame_in = numpy.zeros((FRAME_HEIGHT, FRAME_WIDTH, 3), dtype=numpy.uint8)
+frame_in = numpy.zeros((FRAME_HEIGHT*2, FRAME_WIDTH*2, 3), dtype=numpy.uint8)
 
 cmd = None
 
@@ -219,7 +219,7 @@ while not (cmd == 'q'):
     pixel_cnt = 0
     pixel_cnt_min = 0
     pixel_cnt_max = 4000000
-    frame = frame_in
+    frame = frame_in[::2,::2].copy()
     res = frame
     blue = frame[ROI_Y_OFFSET:ROI_Y_OFFSET+ROI_Y_MAX-1, 0:FRAME_WIDTH-1, 0] # blue only and in outer ROI
     thresh_mask = cv2.inRange(blue, threshold, 255)
@@ -311,7 +311,7 @@ while not (cmd == 'q'):
         res_file_name = "%s/res%05d.png" % (IMG_DIR, frame_cnt)
         frame_cnt += 1
         #cv2.imwrite(frame_file_name, frame)
-        cv2.putText(res, print_string, (10,FRAME_HEIGHT-(int(FRAME_HEIGHT/4))), font, 0.4, (150,150,255))
+        cv2.putText(res, print_string, (10,FRAME_HEIGHT-(int(FRAME_HEIGHT/4))), font, 0.2, (150,150,255))
         if line:
             res = cv2.line(res, (x,0), (x,y), (0,255,0), 2)
         cv2.imwrite(res_file_name, res)
