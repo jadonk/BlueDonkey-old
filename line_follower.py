@@ -78,28 +78,26 @@ STEERING_SERVO_MAX = 1.5
 
 # Array of region of interest masks in the order they should be searched
 # Furthest away first
-ROI_Y_OFFSET = int(8*FRAME_HEIGHT/20)
-ROI_Y_MAX = int(12*FRAME_HEIGHT/20)
 roi_masks = numpy.array([
         # Focus on the center
         # 8/20ths in from the sides
         # 10/20ths down from the top
         # 1/20ths tall
         # 4x1 pixel count
-        [int(8*FRAME_WIDTH/20), int(10*FRAME_HEIGHT/20)-ROI_Y_OFFSET, int(1*FRAME_HEIGHT/20), int((4*FRAME_WIDTH/20)*(1*FRAME_HEIGHT/20)/100)],
+        [int(8*FRAME_WIDTH/20), int(10*FRAME_HEIGHT/20), int(1*FRAME_HEIGHT/20), int((4*FRAME_WIDTH/20)*(1*FRAME_HEIGHT/20)/100)],
         # Then look wider
         # 4/20ths in from the sides
         # 10/20ths down from the top
         # 1/20ths tall
         # 12x1 pixel count
-        [int(4*FRAME_WIDTH/20), int(10*FRAME_HEIGHT/20)-ROI_Y_OFFSET, int(1*FRAME_HEIGHT/20), int((12*FRAME_WIDTH/20)*(1*FRAME_HEIGHT/20)/100)],
+        [int(4*FRAME_WIDTH/20), int(10*FRAME_HEIGHT/20), int(1*FRAME_HEIGHT/20), int((12*FRAME_WIDTH/20)*(1*FRAME_HEIGHT/20)/100)],
         # Then really wide and taller
         # Then look wider
         # 0/20ths in from the sides
         # 10/20ths down from the top
         # 4/20ths tall
         # 20x4 pixel count
-        [int(0*FRAME_WIDTH/10), int(10*FRAME_HEIGHT/20)-ROI_Y_OFFSET, int(4*FRAME_HEIGHT/20), int((20*FRAME_WIDTH/20)*(4*FRAME_HEIGHT/20)/100)],
+        [int(0*FRAME_WIDTH/10), int(10*FRAME_HEIGHT/20), int(4*FRAME_HEIGHT/20), int((20*FRAME_WIDTH/20)*(4*FRAME_HEIGHT/20)/100)],
     ], dtype=numpy.int32)
 
 ###########
@@ -221,28 +219,29 @@ while not (cmd == 'q'):
     pixel_cnt_max = 4000000
     frame = frame_in[::2,::2].copy()
     res = frame
-    blue = frame[ROI_Y_OFFSET:ROI_Y_OFFSET+ROI_Y_MAX-1, 0:FRAME_WIDTH-1, 0] # blue only and in outer ROI
-    thresh_mask = cv2.inRange(blue, threshold, 255)
-    thresh = cv2.bitwise_and(blue, blue, mask=thresh_mask)
     for roi_mask in roi_masks:
         # roi_mask[0] pixels in from the sides
         # roi_mask[1] pixels down from the top
         # roi_mask[2] pixels high
         if (not line) or (pixel_cnt < pixel_cnt_min):
-            thresh_crop = thresh[ roi_mask[1] : roi_mask[1]+roi_mask[2]-1 , roi_mask[0] : FRAME_WIDTH-roi_mask[0]-1 ]
-            pixelpoints = cv2.findNonZero(thresh_crop)
+            # Extract blue only in ROI
+            blue = frame[ roi_mask[1] : roi_mask[1]+roi_mask[2]-1 , roi_mask[0] : FRAME_WIDTH-roi_mask[0]-1 , 0 ]
+            # Zero out pixels below threshold
+            thresh_mask = cv2.inRange(blue, threshold, 255)
+            # Get array of pixel locations that are non-zero
+            pixelpoints = cv2.findNonZero(thresh_mask)
             if pixelpoints is not None:
                 pixel_cnt = pixelpoints.size
                 pixel_cnt_min = int(PERCENT_THRESHOLD_MIN*roi_mask[3])
                 pixel_cnt_max = int(PERCENT_THRESHOLD_MAX*roi_mask[3])
                 vx = 0
                 vy = 1
-                y = ROI_Y_OFFSET + int((2*roi_mask[1]+roi_mask[2]) / 2)
+                y = int((2*roi_mask[1]+roi_mask[2]) / 2)
                 x = int(pixelpoints[:,:,0].mean()) + roi_mask[0]
                 line = [vx,vy,x,y]
                 if BINARY_VIEW:
-                    thresh_color = cv2.cvtColor(thresh_crop, cv2.COLOR_GRAY2BGR)
-                    res[ ROI_Y_OFFSET+roi_mask[1] : ROI_Y_OFFSET+roi_mask[1]+roi_mask[2]-1 , roi_mask[0] : ((FRAME_WIDTH-roi_mask[0])-1) ] = thresh_color
+                    thresh_color = cv2.cvtColor(thresh_mask, cv2.COLOR_GRAY2BGR)
+                    res[ roi_mask[1] : roi_mask[1]+roi_mask[2]-1 , roi_mask[0] : ((FRAME_WIDTH-roi_mask[0])-1) ] = thresh_color
 
     # Adjust threshold if finding too few or too many pixels
     if pixel_cnt > pixel_cnt_max:
