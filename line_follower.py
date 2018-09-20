@@ -58,27 +58,12 @@ if not os.geteuid() == 0:
 if sys.version_info < (3,0):
     sys.exit("\nPlease run under python3.\n")
 
+# rcpy: https://guitar.ucsd.edu/rcpy/html/modules.html
+# cv2: 
+# pygame: 
+# numpy: 
 print("Importing Python modules, please be patient.")
 import cv2, rcpy, datetime, time, numpy, pygame, threading, math
-
-# Enable steering servo
-from rcpy.servo import servo1
-rcpy.servo.enable()
-servo1.set(0)
-servo1clk = rcpy.clock.Clock(servo1, 0.02)
-servo1clk.start()
-
-# Enable throttle
-from rcpy.servo import servo3
-rcpy.servo.enable()
-servo3.set(0)
-servo3clk = rcpy.clock.Clock(servo3, 0.02)
-servo3clk.start()
-time.sleep(1)
-print("Arming throttle")
-servo3.set(-0.1)
-time.sleep(3)
-servo3.set(0)
 
 # Array of region of interest masks in the order they should be searched
 # Furthest away first
@@ -151,13 +136,64 @@ def figure_out_my_throttle(steering): # steering -> [0:180]
 # Servo Control Code
 #
 
+servos_enabled = False
+servos_paused = True
+servo1 = None
+servo3 = None
+servo1clk = None
+servo3clk = None
+def enable_servos():
+    global servo1, servo3, servo1clk, servo3clk
+    servos_enabled = True
+    rcpy.servo.enable()
+
+    # Enable steering servo
+    if not servo1:
+        from rcpy.servo import servo1
+    servo1.set(0)
+    if not servo1clk:
+        servo1clk = rcpy.clock.Clock(servo1, 0.02)
+    servo1clk.start()
+
+    # Enable throttle
+    if not servo3:
+        from rcpy.servo import servo3
+    servo3.set(0)
+    if not servo3clk:
+        servo3clk = rcpy.clock.Clock(servo3, 0.02)
+    servo3clk.start()
+    time.sleep(1)
+    print("Arming throttle")
+    servo3.set(-0.1)
+    time.sleep(3)
+    servo3.set(0)
+
+def disable_servos():
+    servos_enabled = False
+    print("Disarming throttle")
+    servo1.set(0)
+    servo3.set(0)
+    time.sleep(1)
+    rcpy.servo.disable()
+    if servo1clk:
+        servo1clk.stop()
+    if servo3clk:
+        servo3clk.stop()
+
 # throttle [0:100] (101 values) -> [THROTTLE_SERVO_MIN, THROTTLE_SERVO_MAX]
 # steering [0:180] (181 values) -> [STEERING_SERVO_MIN, STEERING_SERVO_MAX]
 def set_servos(throttle, steering):
-    throttle = THROTTLE_SERVO_MIN + ((throttle/100) * (THROTTLE_SERVO_MAX - THROTTLE_SERVO_MIN))
-    steering = STEERING_SERVO_MIN + ((steering/180) * (STEERING_SERVO_MAX - STEERING_SERVO_MIN))
-    servo3.set(throttle)
-    servo1.set(steering)
+    global servos_enabled, servos_paused
+    if not servos_enabled:
+        enable_servos()
+    if not servos_paused:
+        throttle = THROTTLE_SERVO_MIN + ((throttle/100) * (THROTTLE_SERVO_MAX - THROTTLE_SERVO_MIN))
+        steering = STEERING_SERVO_MIN + ((steering/180) * (STEERING_SERVO_MAX - STEERING_SERVO_MIN))
+        servo3.set(throttle)
+        servo1.set(steering)
+    else:
+        servo3.set(0)
+        servo1.set(0)
 
 #
 # Camera Control Code
@@ -165,6 +201,7 @@ def set_servos(throttle, steering):
 
 capture = cv2.VideoCapture(0)
 capture.set(cv2.CAP_PROP_FPS, 30)
+capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"Y210"))
 capture.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH*2)
 capture.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT*2)
 if FRAME_EXPOSURE > 0:
@@ -177,7 +214,7 @@ cmd = None
 
 class cameraThread(threading.Thread):
     def run(self):
-        global frame, frame_in, last_cmd
+        global frame_in, last_cmd
         while True:            
             ret, frametmp = capture.read()
             if ret:
