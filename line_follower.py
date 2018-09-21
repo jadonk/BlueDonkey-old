@@ -87,17 +87,17 @@ roi_masks = numpy.array([
         [int(8*FRAME_WIDTH/20), int(10*FRAME_HEIGHT/20), int(1*FRAME_HEIGHT/20), int((4*FRAME_WIDTH/20)*(1*FRAME_HEIGHT/20)/100)],
         # Then look wider
         # 4/20ths in from the sides
-        # 10/20ths down from the top
+        # 11/20ths down from the top
         # 1/20ths tall
         # 12x1 pixel count
-        [int(4*FRAME_WIDTH/20), int(10*FRAME_HEIGHT/20), int(1*FRAME_HEIGHT/20), int((12*FRAME_WIDTH/20)*(1*FRAME_HEIGHT/20)/100)],
+        [int(4*FRAME_WIDTH/20), int(11*FRAME_HEIGHT/20), int(1*FRAME_HEIGHT/20), int((12*FRAME_WIDTH/20)*(1*FRAME_HEIGHT/20)/100)],
         # Then really wide and taller
         # Then look wider
         # 0/20ths in from the sides
-        # 10/20ths down from the top
-        # 4/20ths tall
-        # 20x4 pixel count
-        [int(0*FRAME_WIDTH/10), int(10*FRAME_HEIGHT/20), int(4*FRAME_HEIGHT/20), int((20*FRAME_WIDTH/20)*(4*FRAME_HEIGHT/20)/100)],
+        # 12[/20ths down from the top
+        # 1/20ths tall
+        # 20x1 pixel count
+        [int(0*FRAME_WIDTH/10), int(12*FRAME_HEIGHT/20), int(1*FRAME_HEIGHT/20), int((20*FRAME_WIDTH/20)*(1*FRAME_HEIGHT/20)/100)],
     ], dtype=numpy.int32)
 
 ###########
@@ -216,17 +216,17 @@ while not (cmd == 'q'):
     clock.tick()
     line = False
     pixel_cnt = 0
-    pixel_cnt_min = 0
-    pixel_cnt_max = 4000000
-    # Go from 320x240 to 160x120 and make a copy
-    frame = frame_in[::2,::2].copy()
+    pixel_cnt_min = int(PERCENT_THRESHOLD_MIN*roi_masks[2][3])
+    pixel_cnt_max = int(PERCENT_THRESHOLD_MAX*roi_masks[2][3])
+    # Cconvert 320x240 to 160x120
+    frame = frame_in[::2 ,::2].copy()
     for roi_mask in roi_masks:
         # roi_mask[0] pixels in from the sides
         # roi_mask[1] pixels down from the top
         # roi_mask[2] pixels high
         # roi_mask[3] number of pixels / 100
         if (not line) or (pixel_cnt < pixel_cnt_min):
-            # Extract blue only in ROI
+            # Extract blue only in ROI 
             blue = frame[ roi_mask[1] : roi_mask[1]+roi_mask[2]-1 , roi_mask[0] : FRAME_WIDTH-roi_mask[0]-1 , 0 ]
             # Zero out pixels below threshold
             thresh_mask = cv2.inRange(blue, threshold, 255)
