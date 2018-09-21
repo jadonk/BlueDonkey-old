@@ -39,7 +39,7 @@ servo3.set(0)
 IMG_DIR = "/run/bluedonkey"
 #FRAME_EXPOSURE = 0.000001
 FRAME_EXPOSURE = 0
-BINARY_VIEW = True # Helps debugging but costs FPS if on
+BINARY_VIEW = False # Helps debugging but costs FPS if on
 COLOR_THRESHOLD_MIN = 160
 COLOR_THRESHOLD_MAX = 254
 COLOR_THRESHOLD_DELTA = 4
