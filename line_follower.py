@@ -52,8 +52,8 @@ MIXING_RATE = 0.9 # Percentage of a new line detection to mix into current steer
 # Tweak these values for your robocar.
 THROTTLE_CUT_OFF_ANGLE = 3.0 # Maximum angular distance from 90 before we cut speed [0.0-90.0).
 THROTTLE_CUT_OFF_RATE = 0.8 # How much to cut our speed boost (below) once the above is passed (0.0-1.0].
-THROTTLE_GAIN = 0.0 # e.g. how much to speed up on a straight away
-THROTTLE_OFFSET = 65.0 # e.g. default speed (0 to 100)
+THROTTLE_GAIN = 60.0 # e.g. how much to speed up on a straight away
+THROTTLE_OFFSET = 40.0 # e.g. default speed (0 to 100)
 THROTTLE_P_GAIN = 1.0
 THROTTLE_I_GAIN = 0.0
 THROTTLE_I_MIN = -0.0
@@ -62,15 +62,15 @@ THROTTLE_D_GAIN = 0.0
 
 # Tweak these values for your robocar.
 STEERING_OFFSET = 90 # Change this if you need to fix an imbalance in your car (0 to 180).
-STEERING_P_GAIN = -30.0 # Make this smaller as you increase your speed and vice versa.
+STEERING_P_GAIN = -20.0 # Make this smaller as you increase your speed and vice versa.
 STEERING_I_GAIN = 0.0
 STEERING_I_MIN = -0.0
 STEERING_I_MAX = 0.0
-STEERING_D_GAIN = -7 # Make this larger as you increase your speed and vice versa.
+STEERING_D_GAIN = -10 # Make this larger as you increase your speed and vice versa.
 
 # Tweak these values for your robocar.
 THROTTLE_SERVO_MIN = 0
-THROTTLE_SERVO_MAX = 0.12
+THROTTLE_SERVO_MAX = 0.15
 
 # Tweak these values for your robocar.
 STEERING_SERVO_MIN = -1.5
@@ -81,20 +81,20 @@ STEERING_SERVO_MAX = 1.5
 roi_masks = numpy.array([
         # Focus on the center
         # 8/20ths in from the sides
-        # 10/20ths down from the top
+        # 8/20ths down from the top
         # 1/20ths tall
         # 4x1 pixel count
-        [int(8*FRAME_WIDTH/20), int(10*FRAME_HEIGHT/20), int(1*FRAME_HEIGHT/20), int((4*FRAME_WIDTH/20)*(1*FRAME_HEIGHT/20)/100)],
+        [int(8*FRAME_WIDTH/20), int(8*FRAME_HEIGHT/20), int(1*FRAME_HEIGHT/20), int((4*FRAME_WIDTH/20)*(1*FRAME_HEIGHT/20)/100)],
         # Then look wider
         # 4/20ths in from the sides
-        # 11/20ths down from the top
+        # 10/20ths down from the top
         # 1/20ths tall
         # 12x1 pixel count
-        [int(4*FRAME_WIDTH/20), int(11*FRAME_HEIGHT/20), int(1*FRAME_HEIGHT/20), int((12*FRAME_WIDTH/20)*(1*FRAME_HEIGHT/20)/100)],
+        [int(4*FRAME_WIDTH/20), int(10*FRAME_HEIGHT/20), int(1*FRAME_HEIGHT/20), int((12*FRAME_WIDTH/20)*(1*FRAME_HEIGHT/20)/100)],
         # Then really wide and taller
         # Then look wider
         # 0/20ths in from the sides
-        # 12[/20ths down from the top
+        # 12/20ths down from the top
         # 1/20ths tall
         # 20x1 pixel count
         [int(0*FRAME_WIDTH/10), int(12*FRAME_HEIGHT/20), int(1*FRAME_HEIGHT/20), int((20*FRAME_WIDTH/20)*(1*FRAME_HEIGHT/20)/100)],
@@ -138,11 +138,11 @@ def figure_out_my_steering(line, img):
         old_cx_normal = cx_normal
     return old_cx_normal
 
-# Solve: THROTTLE_CUT_OFF_RATE = pow(sin(90 +/- THROTTLE_CUT_OFF_ANGLE), x) for x...
-#        -> sin(90 +/- THROTTLE_CUT_OFF_ANGLE) = cos(THROTTLE_CUT_OFF_ANGLE)
-t_power = math.log(THROTTLE_CUT_OFF_RATE) / math.log(math.cos(math.radians(THROTTLE_CUT_OFF_ANGLE)))
-
 def figure_out_my_throttle(steering): # steering -> [0:180]
+    # Solve: THROTTLE_CUT_OFF_RATE = pow(sin(90 +/- THROTTLE_CUT_OFF_ANGLE), x) for x...
+    #        -> sin(90 +/- THROTTLE_CUT_OFF_ANGLE) = cos(THROTTLE_CUT_OFF_ANGLE)
+    t_power = math.log(THROTTLE_CUT_OFF_RATE) / math.log(math.cos(math.radians(THROTTLE_CUT_OFF_ANGLE)))
+
     # pow(sin()) of the steering angle is only non-zero when driving straight... e.g. steering ~= 90
     t_result = math.pow(math.sin(math.radians(max(min(steering, 179.99), 0.0))), t_power)
     return (t_result * THROTTLE_GAIN) + THROTTLE_OFFSET
