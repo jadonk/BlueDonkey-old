@@ -315,6 +315,8 @@ while not (cmd == 'q'):
         throttle_output = throttle_output * 0.99
         print_string = "Lost %03d %03d %03d %05d" % \
             (steering_output, throttle_output, threshold, frame_cnt)
+            
+    set_servos(throttle_output, steering_output)
 
 #    if paused:
 #        set_servos(0, STEERING_OFFSET)
