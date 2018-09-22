@@ -308,13 +308,13 @@ while not (cmd == 'q'):
         # Throttle goes from 0% to 100%.
         throttle_output = max(min(throttle_pid_output, 100), 0)
 
-        print_string = " %03d %03d %03d %03d %05d %01d" % \
-            (x, steering_output, throttle_output, threshold, frame_cnt, paused)
+        print_string = " %03d %03d %03d %03d %05d" % \
+            (x, steering_output, throttle_output, threshold, frame_cnt)
 
     else:
         throttle_output = throttle_output * 0.99
-        print_string = "Lost %03d %03d %03d %05d %01d" % \
-            (steering_output, throttle_output, threshold, frame_cnt, paused)
+        print_string = "Lost %03d %03d %03d %05d" % \
+            (steering_output, throttle_output, threshold, frame_cnt)
 
 #    if paused:
 #        set_servos(0, STEERING_OFFSET)
