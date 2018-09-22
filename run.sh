@@ -4,3 +4,5 @@ mkdir -p /run/bluedonkey
 chown debian.debian /run/bluedonkey
 chmod ugo+rwx /run/bluedonkey
 cp images.html /run/bluedonkey/
+echo 69 > /sys/class/gpio/export
+python3 line_follower.py

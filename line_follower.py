@@ -50,10 +50,10 @@ FRAME_HEIGHT = 120
 MIXING_RATE = 0.9 # Percentage of a new line detection to mix into current steering.
 
 # Tweak these values for your robocar.
-THROTTLE_CUT_OFF_ANGLE = 3.0 # Maximum angular distance from 90 before we cut speed [0.0-90.0).
+THROTTLE_CUT_OFF_ANGLE = 2.0 # Maximum angular distance from 90 before we cut speed [0.0-90.0).
 THROTTLE_CUT_OFF_RATE = 0.9 # How much to cut our speed boost (below) once the above is passed (0.0-1.0].
-THROTTLE_GAIN = 20.0 # e.g. how much to speed up on a straight away
-THROTTLE_OFFSET = 40.0 # e.g. default speed (0 to 100)
+THROTTLE_GAIN = 30.0 # e.g. how much to speed up on a straight away
+THROTTLE_OFFSET = 50.0 # e.g. default speed (0 to 100)
 THROTTLE_P_GAIN = 1.0
 THROTTLE_I_GAIN = 0.0
 THROTTLE_I_MIN = -0.0
@@ -217,6 +217,11 @@ frame_cnt = 0
 threshold = COLOR_THRESHOLD_MAX
 font = cv2.FONT_HERSHEY_SIMPLEX
 
+#from rcpy import gpio
+#pause_button = gpio.Input(gpio.PAUSE_BTN[0],gpio.PAUSE_BTN[1])
+#paused = True
+#pause_pressed = False
+
 while not (cmd == 'q'):
     clock.tick()
     line = False
@@ -303,15 +308,31 @@ while not (cmd == 'q'):
         # Throttle goes from 0% to 100%.
         throttle_output = max(min(throttle_pid_output, 100), 0)
 
-        print_string = " %03d %03d %03d %03d %05d" % \
-            (x, steering_output, throttle_output, threshold, frame_cnt)
+        print_string = " %03d %03d %03d %03d %05d %01d" % \
+            (x, steering_output, throttle_output, threshold, frame_cnt, paused)
 
     else:
         throttle_output = throttle_output * 0.99
-        print_string = "Lost %03d %03d %03d %05d" % \
-            (steering_output, throttle_output, threshold, frame_cnt)
+        print_string = "Lost %03d %03d %03d %05d %01d" % \
+            (steering_output, throttle_output, threshold, frame_cnt, paused)
 
-    set_servos(throttle_output, steering_output)
+#    if paused:
+#        set_servos(0, STEERING_OFFSET)
+#        if pause_button.is_low():
+#            if not pause_pressed:
+#                pause_pressed = True
+#                paused = False
+#        else:
+#            paused_pressed = False
+#    else:
+#        set_servos(throttle_output, steering_output)
+#        if pause_button.is_low():
+#            if not pause_pressed:
+#                pause_pressed = True
+#                paused = True
+#        else:
+#            paused_pressed = False
+
     if BINARY_VIEW:
         #frame_file_name = "%s/cam%05d.png" % (IMG_DIR, frame_cnt)
         res_file_name = "%s/res%05d.png" % (IMG_DIR, frame_cnt)
