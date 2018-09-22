@@ -52,8 +52,8 @@ MIXING_RATE = 0.9 # Percentage of a new line detection to mix into current steer
 # Tweak these values for your robocar.
 THROTTLE_CUT_OFF_ANGLE = 2.0 # Maximum angular distance from 90 before we cut speed [0.0-90.0).
 THROTTLE_CUT_OFF_RATE = 0.9 # How much to cut our speed boost (below) once the above is passed (0.0-1.0].
-THROTTLE_GAIN = 30.0 # e.g. how much to speed up on a straight away
-THROTTLE_OFFSET = 50.0 # e.g. default speed (0 to 100)
+THROTTLE_GAIN = 60.0 # e.g. how much to speed up on a straight away
+THROTTLE_OFFSET = 40.0 # e.g. default speed (0 to 100)
 THROTTLE_P_GAIN = 1.0
 THROTTLE_I_GAIN = 0.0
 THROTTLE_I_MIN = -0.0
@@ -62,7 +62,7 @@ THROTTLE_D_GAIN = 0.0
 
 # Tweak these values for your robocar.
 STEERING_OFFSET = 90 # Change this if you need to fix an imbalance in your car (0 to 180).
-STEERING_P_GAIN = -40.0 # Make this smaller as you increase your speed and vice versa.
+STEERING_P_GAIN = -20.0 # Make this smaller as you increase your speed and vice versa.
 STEERING_I_GAIN = 0.0
 STEERING_I_MIN = -0.0
 STEERING_I_MAX = 0.0
@@ -80,7 +80,7 @@ STEERING_SERVO_MAX = 1.5
 # Furthest away first
 roi_masks = numpy.array([
         # Focus on the center
-        # 8/20ths in from the sides
+        # 8/20ths in from the left
         # 8/20ths down from the top
         # 1/20ths tall
         # 4x1 pixel count
@@ -237,7 +237,11 @@ while not (cmd == 'q'):
         # roi_mask[3] number of pixels / 100
         if (not line) or (pixel_cnt < pixel_cnt_min):
             # Extract blue only in ROI 
-            blue = frame[ roi_mask[1] : roi_mask[1]+roi_mask[2]-1 , roi_mask[0] : FRAME_WIDTH-roi_mask[0]-1 , 0 ]
+            top = roi_mask[1]
+            bottom = roi_mask[1] + roi_mask[2] - 1
+            left = roi_mask[0]
+            right = FRAME_WIDTH-roi_mask[0]-1
+            blue = frame[ top : bottom , left : right , 0 ]
             # Zero out pixels below threshold
             thresh_mask = cv2.inRange(blue, threshold, 255)
             # Get array of pixel locations that are non-zero
@@ -248,12 +252,12 @@ while not (cmd == 'q'):
                 pixel_cnt_max = int(PERCENT_THRESHOLD_MAX*roi_mask[3])
                 vx = 0
                 vy = 1
-                y = int((2*roi_mask[1]+roi_mask[2]) / 2)
+                y = int((top+bottom) / 2)
                 x = int(pixelpoints[:,:,0].mean()) + roi_mask[0]
                 line = [vx,vy,x,y]
                 if BINARY_VIEW:
                     thresh_color = cv2.cvtColor(thresh_mask, cv2.COLOR_GRAY2BGR)
-                    frame[ roi_mask[1] : roi_mask[1]+roi_mask[2]-1 , roi_mask[0] : ((FRAME_WIDTH-roi_mask[0])-1) ] = thresh_color
+                    frame[ top : bottom , left : right ] = thresh_color
 
     # Adjust threshold if finding too few or too many pixels
     if pixel_cnt > pixel_cnt_max:
