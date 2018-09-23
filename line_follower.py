@@ -39,7 +39,7 @@ servo3.set(0)
 IMG_DIR = "/run/bluedonkey"
 #FRAME_EXPOSURE = 0.000001
 FRAME_EXPOSURE = 0
-BINARY_VIEW = False # Helps debugging but costs FPS if on
+BINARY_VIEW = True # Helps debugging but costs FPS if on
 COLOR_THRESHOLD_MIN = 250
 COLOR_THRESHOLD_MAX = 254
 COLOR_THRESHOLD_DELTA = 1
@@ -170,9 +170,9 @@ def set_servos(throttle, steering):
 
 capture = cv2.VideoCapture(0)
 capture.set(cv2.CAP_PROP_FPS, 30)
-capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"Y210"))
-capture.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH*2)
-capture.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT*2)
+#capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"Y210"))
+capture.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH)
+capture.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
 if FRAME_EXPOSURE > 0:
     capture.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
     capture.set(cv2.CAP_PROP_EXPOSURE, FRAME_EXPOSURE)
@@ -229,7 +229,8 @@ while not (cmd == 'q'):
     pixel_cnt_min = int(PERCENT_THRESHOLD_MIN*roi_masks[2][3])
     pixel_cnt_max = int(PERCENT_THRESHOLD_MAX*roi_masks[2][3])
     # Cconvert 320x240 to 160x120
-    frame = frame_in[::2 ,::2].copy()
+    #frame = frame_in[::2 ,::2].copy()
+    frame = frame_in.copy()
     for roi_mask in roi_masks:
         # roi_mask[0] pixels in from the sides
         # roi_mask[1] pixels down from the top
