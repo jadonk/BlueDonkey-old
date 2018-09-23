@@ -50,10 +50,10 @@ FRAME_HEIGHT = 120
 MIXING_RATE = 0.9 # Percentage of a new line detection to mix into current steering.
 
 # Tweak these values for your robocar.
-THROTTLE_CUT_OFF_ANGLE = 2.0 # Maximum angular distance from 90 before we cut speed [0.0-90.0).
+THROTTLE_CUT_OFF_ANGLE = 3.0 # Maximum angular distance from 90 before we cut speed [0.0-90.0).
 THROTTLE_CUT_OFF_RATE = 0.9 # How much to cut our speed boost (below) once the above is passed (0.0-1.0].
-THROTTLE_GAIN = 60.0 # e.g. how much to speed up on a straight away
-THROTTLE_OFFSET = 40.0 # e.g. default speed (0 to 100)
+THROTTLE_GAIN = 40.0 # e.g. how much to speed up on a straight away
+THROTTLE_OFFSET = 60.0 # e.g. default speed (0 to 100)
 THROTTLE_P_GAIN = 1.0
 THROTTLE_I_GAIN = 0.0
 THROTTLE_I_MIN = -0.0
@@ -62,7 +62,7 @@ THROTTLE_D_GAIN = 0.0
 
 # Tweak these values for your robocar.
 STEERING_OFFSET = 90 # Change this if you need to fix an imbalance in your car (0 to 180).
-STEERING_P_GAIN = -20.0 # Make this smaller as you increase your speed and vice versa.
+STEERING_P_GAIN = -10.0 # Make this smaller as you increase your speed and vice versa.
 STEERING_I_GAIN = 0.0
 STEERING_I_MIN = -0.0
 STEERING_I_MAX = 0.0
