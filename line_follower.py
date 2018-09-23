@@ -62,11 +62,11 @@ THROTTLE_D_GAIN = 0.0
 
 # Tweak these values for your robocar.
 STEERING_OFFSET = 90 # Change this if you need to fix an imbalance in your car (0 to 180).
-STEERING_P_GAIN = -10.0 # Make this smaller as you increase your speed and vice versa.
+STEERING_P_GAIN = -5.0 # Make this smaller as you increase your speed and vice versa.
 STEERING_I_GAIN = 0.0
 STEERING_I_MIN = -0.0
 STEERING_I_MAX = 0.0
-STEERING_D_GAIN = -7 # Make this larger as you increase your speed and vice versa.
+STEERING_D_GAIN = -14 # Make this larger as you increase your speed and vice versa.
 
 # Tweak these values for your robocar.
 THROTTLE_SERVO_MIN = 0
@@ -170,7 +170,8 @@ def set_servos(throttle, steering):
 
 capture = cv2.VideoCapture(0)
 capture.set(cv2.CAP_PROP_FPS, 30)
-#capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"Y210"))
+capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"Y210"))
+#capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
 capture.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH)
 capture.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
 if FRAME_EXPOSURE > 0:
