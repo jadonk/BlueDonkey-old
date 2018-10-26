@@ -7,25 +7,27 @@ if sys.version_info < (3,0):
 
 print("Importing Python modules, please be patient.")
 import cv2, rcpy, datetime, time, numpy, pygame, threading, math
-
-# Enable steering servo
 from rcpy.servo import servo1
-rcpy.servo.enable()
-servo1.set(0)
-servo1clk = rcpy.clock.Clock(servo1, 0.02)
-servo1clk.start()
-
-# Enable throttle
 from rcpy.servo import servo3
-rcpy.servo.enable()
-servo3.set(0)
-servo3clk = rcpy.clock.Clock(servo3, 0.02)
-servo3clk.start()
-time.sleep(1)
-print("Arming throttle")
-servo3.set(-0.1)
-time.sleep(3)
-servo3.set(0)
+print("Done importing Python modules!")
+
+def enable_steering_and_throttle():
+    rcpy.servo.enable()
+    
+    # Enable steering servo
+    servo1.set(0)
+    servo1clk = rcpy.clock.Clock(servo1, 0.02)
+    servo1clk.start()
+    
+    # Enable throttle
+    servo3.set(0)
+    servo3clk = rcpy.clock.Clock(servo3, 0.02)
+    servo3clk.start()
+    time.sleep(1)
+    print("Arming throttle")
+    servo3.set(-0.1)
+    time.sleep(3)
+    servo3.set(0)
 
 # This file was originally part of the OpenMV project.
 # Copyright (c) 2013-2017 Ibrahim Abdelkader <iabdalkader@openmv.io> & Kwabena W. Agyeman <kwagyeman@openmv.io>
@@ -39,7 +41,7 @@ servo3.set(0)
 IMG_DIR = "/run/bluedonkey"
 #FRAME_EXPOSURE = 0.000001
 FRAME_EXPOSURE = 0
-BINARY_VIEW = True # Helps debugging but costs FPS if on
+BINARY_VIEW = False # Helps debugging but costs FPS if on
 COLOR_THRESHOLD_MIN = 250
 COLOR_THRESHOLD_MAX = 254
 COLOR_THRESHOLD_DELTA = 1
@@ -62,11 +64,11 @@ THROTTLE_D_GAIN = 0.0
 
 # Tweak these values for your robocar.
 STEERING_OFFSET = 90 # Change this if you need to fix an imbalance in your car (0 to 180).
-STEERING_P_GAIN = -5.0 # Make this smaller as you increase your speed and vice versa.
+STEERING_P_GAIN = -10.0 # Make this smaller as you increase your speed and vice versa.
 STEERING_I_GAIN = 0.0
 STEERING_I_MIN = -0.0
 STEERING_I_MAX = 0.0
-STEERING_D_GAIN = -14 # Make this larger as you increase your speed and vice versa.
+STEERING_D_GAIN = -7 # Make this larger as you increase your speed and vice versa.
 
 # Tweak these values for your robocar.
 THROTTLE_SERVO_MIN = 0
@@ -171,9 +173,8 @@ def set_servos(throttle, steering):
 capture = cv2.VideoCapture(0)
 capture.set(cv2.CAP_PROP_FPS, 30)
 capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"Y210"))
-#capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
-capture.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH)
-capture.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
+capture.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH*2)
+capture.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT*2)
 if FRAME_EXPOSURE > 0:
     capture.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
     capture.set(cv2.CAP_PROP_EXPOSURE, FRAME_EXPOSURE)
@@ -222,6 +223,7 @@ font = cv2.FONT_HERSHEY_SIMPLEX
 #pause_button = gpio.Input(gpio.PAUSE_BTN[0],gpio.PAUSE_BTN[1])
 #paused = True
 #pause_pressed = False
+enable_steering_and_throttle()
 
 while not (cmd == 'q'):
     clock.tick()
@@ -230,8 +232,7 @@ while not (cmd == 'q'):
     pixel_cnt_min = int(PERCENT_THRESHOLD_MIN*roi_masks[2][3])
     pixel_cnt_max = int(PERCENT_THRESHOLD_MAX*roi_masks[2][3])
     # Cconvert 320x240 to 160x120
-    #frame = frame_in[::2 ,::2].copy()
-    frame = frame_in.copy()
+    frame = frame_in[::2 ,::2].copy()
     for roi_mask in roi_masks:
         # roi_mask[0] pixels in from the sides
         # roi_mask[1] pixels down from the top
