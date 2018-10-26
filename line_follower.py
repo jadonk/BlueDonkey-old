@@ -18,7 +18,6 @@ class PauseButtonEvent(button.ButtonEvent):
     def action(self, event):
         global paused
         paused = not paused
-        print('Got <PAUSE>!')
 
 pause_event = PauseButtonEvent(pause, button.ButtonEvent.PRESSED)
 pause_event.start()
@@ -221,7 +220,7 @@ old_time = datetime.datetime.now()
 
 throttle_old_result = None
 throttle_i_output = 0
-throttle_output = THROTTLE_OFFSET
+throttle_output = 0
 
 steering_old_result = None
 steering_i_output = 0
@@ -334,9 +333,12 @@ while not (cmd == 'q'):
             (steering_output, throttle_output, threshold, frame_cnt)
 
     if paused:
-        set_servos(0, steering_output)
-    else:
-        set_servos(throttle_output, steering_output)
+        print_string = "Paus %03d %03d %03d %05d" % \
+            (steering_output, throttle_output, threshold, frame_cnt)
+        throttle_output = 0
+        steering_output = STEERING_OFFSET
+
+    set_servos(throttle_output, steering_output)
 
     if BINARY_VIEW:
         #frame_file_name = "%s/cam%05d.png" % (IMG_DIR, frame_cnt)
