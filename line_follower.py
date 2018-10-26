@@ -5,6 +5,9 @@ if not os.geteuid() == 0:
 if sys.version_info < (3,0):
     sys.exit("\nPlease run under python3.\n")
 
+PIPE_FILE = "/run/bluedonkey/pipe"
+sys.stdout = open(PIPE_FILE, "w")
+
 print("Importing Python modules, please be patient.")
 import cv2, rcpy, datetime, time, numpy, pygame, threading, math
 from rcpy.servo import servo1
