@@ -9,7 +9,19 @@ print("Importing Python modules, please be patient.")
 import cv2, rcpy, datetime, time, numpy, pygame, threading, math
 from rcpy.servo import servo1
 from rcpy.servo import servo3
+from rcpy.button import mode, pause
+from rcpy import button
 print("Done importing Python modules!")
+
+paused = True
+class PauseButtonEvent(button.ButtonEvent):
+    def action(self, event):
+        global paused
+        paused = not paused
+        print('Got <PAUSE>!')
+
+pause_event = PauseButtonEvent(pause, button.ButtonEvent.PRESSED)
+pause_event.start()
 
 def enable_steering_and_throttle():
     rcpy.servo.enable()
@@ -219,10 +231,8 @@ frame_cnt = 0
 threshold = COLOR_THRESHOLD_MAX
 font = cv2.FONT_HERSHEY_SIMPLEX
 
-#from rcpy import gpio
-#pause_button = gpio.Input(gpio.PAUSE_BTN[0],gpio.PAUSE_BTN[1])
-#paused = True
-#pause_pressed = False
+paused = True
+pause_pressed = False
 enable_steering_and_throttle()
 
 while not (cmd == 'q'):
@@ -322,25 +332,11 @@ while not (cmd == 'q'):
         throttle_output = throttle_output * 0.99
         print_string = "Lost %03d %03d %03d %05d" % \
             (steering_output, throttle_output, threshold, frame_cnt)
-            
-    set_servos(throttle_output, steering_output)
 
-#    if paused:
-#        set_servos(0, STEERING_OFFSET)
-#        if pause_button.is_low():
-#            if not pause_pressed:
-#                pause_pressed = True
-#                paused = False
-#        else:
-#            paused_pressed = False
-#    else:
-#        set_servos(throttle_output, steering_output)
-#        if pause_button.is_low():
-#            if not pause_pressed:
-#                pause_pressed = True
-#                paused = True
-#        else:
-#            paused_pressed = False
+    if paused:
+        set_servos(0, steering_output)
+    else:
+        set_servos(throttle_output, steering_output)
 
     if BINARY_VIEW:
         #frame_file_name = "%s/cam%05d.png" % (IMG_DIR, frame_cnt)
