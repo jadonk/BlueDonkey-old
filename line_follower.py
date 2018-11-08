@@ -5,8 +5,11 @@ if not os.geteuid() == 0:
 if sys.version_info < (3,0):
     sys.exit("\nPlease run under python3.\n")
 
-PIPE_FILE = "/run/bluedonkey/pipe"
-sys.stdout = open(PIPE_FILE, "w")
+PIPEOUT_FILE = "/run/bluedonkey/pipeout"
+#PIPEIN_FILE = "/run/bluedonkey/pipein"
+sys.stdout = open(PIPEOUT_FILE, "w")
+#sys.stderr = open(PIPEOUT_FILE, "w")
+#sys.stdin = open(PIPEIN_FILE, "r")
 
 print("Importing Python modules, please be patient.")
 import cv2, rcpy, datetime, time, numpy, pygame, threading, math
@@ -14,13 +17,23 @@ from rcpy.servo import servo1
 from rcpy.servo import servo3
 from rcpy.button import mode, pause
 from rcpy import button
+from rcpy.led import red
+from rcpy.led import green
 print("Done importing Python modules!")
 
 paused = True
+red.on()
+green.off()
 class PauseButtonEvent(button.ButtonEvent):
     def action(self, event):
         global paused
         paused = not paused
+        if paused:
+            red.on()
+            green.off()
+        else:
+            green.on()
+            red.off()
 
 pause_event = PauseButtonEvent(pause, button.ButtonEvent.PRESSED)
 pause_event.start()
@@ -220,6 +233,7 @@ clock = pygame.time.Clock()
 ###########
 
 old_time = datetime.datetime.now()
+msec_stamp = 0
 
 throttle_old_result = None
 throttle_i_output = 0
@@ -285,8 +299,11 @@ while not (cmd == 'q'):
             threshold = COLOR_THRESHOLD_MIN
 
     print_string = ""
+    stamp_time = datetime.datetime.now()
+    msec_stamp = int((stamp_time.second * 1000) + (stamp_time.microsecond / 1000))
+
     if line:
-        new_time = datetime.datetime.now()
+        new_time = stamp_time
         delta_time = (new_time - old_time).microseconds / 1000
         old_time = new_time
 
@@ -326,20 +343,21 @@ while not (cmd == 'q'):
 
         # Throttle goes from 0% to 100%.
         throttle_output = max(min(throttle_pid_output, 100), 0)
-
-        print_string = " %03d %03d %03d %03d %05d" % \
-            (x, steering_output, throttle_output, threshold, frame_cnt)
-
     else:
         throttle_output = throttle_output * 0.99
-        print_string = "Lost %03d %03d %03d %05d" % \
-            (steering_output, throttle_output, threshold, frame_cnt)
 
     if paused:
-        print_string = "Paus %03d %03d %03d %05d" % \
-            (steering_output, throttle_output, threshold, frame_cnt)
+        print_string = "Paus %03d %03d %03d %05d %05d" % \
+            (steering_output, throttle_output, threshold, msec_stamp, frame_cnt)
         throttle_output = 0
         steering_output = STEERING_OFFSET
+    else:
+        if line:
+            print_string = " %03d %03d %03d %03d %05d %05d" % \
+                (x, steering_output, throttle_output, threshold, msec_stamp, frame_cnt)
+        else:
+            print_string = "Lost %03d %03d %03d %05d %05d" % \
+                (steering_output, throttle_output, threshold, msec_stamp, frame_cnt)
 
     set_servos(throttle_output, steering_output)
 
@@ -352,4 +370,5 @@ while not (cmd == 'q'):
         if line:
             frame = cv2.line(frame, (x,0), (x,y), (0,255,0), 2)
         cv2.imwrite(res_file_name, frame)
-    print("FPS %05.2f - %s\r" % (clock.get_fps(), print_string), end="")
+
+    print("%06.2f %s\r" % (clock.get_fps(), print_string), end="")
