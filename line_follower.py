@@ -7,7 +7,7 @@ if sys.version_info < (3,0):
 
 PIPEOUT_FILE = "/run/bluedonkey/pipeout"
 #PIPEIN_FILE = "/run/bluedonkey/pipein"
-sys.stdout = open(PIPEOUT_FILE, "w")
+sys.stdout = open(PIPEOUT_FILE, "a")
 #sys.stderr = open(PIPEOUT_FILE, "w")
 #sys.stdin = open(PIPEIN_FILE, "r")
 
