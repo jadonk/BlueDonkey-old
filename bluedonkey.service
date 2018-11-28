@@ -4,7 +4,7 @@ After=multi-user.target
 
 [Service]
 Type=idle
-ExecStart=/usr/local/bin/bluedonkey_run.sh
+ExecStart=/opt/bluedonkey/bluedonkey_run.sh
 
 [Install]
 WantedBy=multi-user.target
