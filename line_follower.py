@@ -1,16 +1,13 @@
 #!/usr/bin/env python3
+
+# Make sure we are running as 'root' under Python 3
 import os, sys
 if not os.geteuid() == 0:
     sys.exit("\nPlease run as root.\n")
 if sys.version_info < (3,0):
     sys.exit("\nPlease run under python3.\n")
 
-PIPEOUT_FILE = "/run/bluedonkey/pipeout"
-#PIPEIN_FILE = "/run/bluedonkey/pipein"
-sys.stdout = open(PIPEOUT_FILE, "a")
-#sys.stderr = open(PIPEOUT_FILE, "w")
-#sys.stdin = open(PIPEIN_FILE, "r")
-
+# Load modules
 print("Importing Python modules, please be patient.")
 import cv2, rcpy, datetime, time, numpy, pygame, threading, math
 from rcpy.servo import servo1
@@ -19,8 +16,22 @@ from rcpy.button import mode, pause
 from rcpy import button
 from rcpy.led import red
 from rcpy.led import green
+import socket
 print("Done importing Python modules!")
 
+# Redirect input/output to a socket
+SOCK_OUT = 3001
+SOCK_IN = 3002
+sock_out = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+sock_out.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+sock_out.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+sock_out.connect(("255.255.255.255", SOCK_OUT))
+sys.stdout = sock_out.makefile('w', buffering=None)
+#sock_in = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+#sock_in.connect(("127.0.0.1", SOCK_IN))
+#sys.stdin = sock_in.makefile('r', buffering=None)
+
+# Start-up in 'paused' mode and handle button presses to exit paused mode
 paused = True
 red.on()
 green.off()
@@ -34,10 +45,10 @@ class PauseButtonEvent(button.ButtonEvent):
         else:
             green.on()
             red.off()
-
 pause_event = PauseButtonEvent(pause, button.ButtonEvent.PRESSED)
 pause_event.start()
 
+# Enable PWM/servo outputs
 def enable_steering_and_throttle():
     rcpy.servo.enable()
     
