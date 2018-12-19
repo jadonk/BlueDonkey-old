@@ -362,6 +362,7 @@ while not (cmd == 'q'):
             (steering_output, throttle_output, threshold, msec_stamp, frame_cnt)
         throttle_output = 0
         steering_output = STEERING_OFFSET
+        time.sleep(0.001)
     else:
         if line:
             print_string = " %03d %03d %03d %03d %05d %05d" % \
