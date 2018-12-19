@@ -5,12 +5,27 @@ Latest version is at https://github.com/jadonk/BlueDonkey
 This is based on Debian Buster, which has support for python3-opencv.
 
 * Program the following image using Etcher.io:
-  * https://debian.beagleboard.org/images/bone-debian-buster-iot-armhf-2018-06-17-4gb.img.xz
-* Add python3-pygame from sid.  See https://www.debian.org/doc/manuals/apt-howto/ch-apt-get.en.html#s-default-version
-* Install other needed python3 packages
+  * https://rcn-ee.net/rootfs/bb.org/testing/2018-12-16/buster-iot/bone-debian-buster-iot-armhf-2018-12-16-4gb.img.xz
+
+* Get your board on the Internet
+  * Your board should have an SSID of BeagleBone-XXXX, where XXXX is random. Password is 'BeagleBone'.
+  * Connect to http://192.168.8.1 via your web browser to get to the console/IDE.
+  * Run 'sudo connmanctl' at the console to connect to the Internet using your own access point.
+```
+scan wifi
+services
+agent on
+connect <<your access point ID>>
+quit
+```
+
+* Install BlueDonkey and dependencies
 ```sh
 sudo apt-get update
-sudo apt-get install -y python3-pip python3-wheel python3-opencv libopencv-dev
+sudo apt-get install -y python3-pip python3-wheel python3-opencv libopencv-dev python3-pygame
+git clone https://github.com/jadonk/bluedonkey
+cd bluedonkey
+sudo ./install.sh
 ```
 
 # Build car
@@ -21,9 +36,14 @@ sudo apt-get install -y python3-pip python3-wheel python3-opencv libopencv-dev
 
 Set BINARY_VIEW if you want to save images. You'll also need to nsert a microSD card and mount it at IMG_DIR.
 
+The RED LED should come up on boot.
+
+You should be able to monitor the running line follower application.
 ```sh
-sudo ./line_follower.py
+bluedonkey_listen
 ```
+
+Press the PAU (pause) button to start driving! The RED LED should go off and the GREEN LED should turn on.
 
 # Other
 
