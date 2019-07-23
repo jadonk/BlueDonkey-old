@@ -18,12 +18,13 @@ def start_mjpg_streamer():
 
     print("Starting up mjpg_streamer.")
     subprocess.run(["mjpg_streamer", "-i",
-        "input_opencv.so -r 640x480 --filter /usr/local/lib/mjpg-streamer/cvfilter_py.so --fargs " + os.path.realpath(__file__),
+        "input_opencv.so -r 640x480 --filter /usr/lib/mjpg-streamer/cvfilter_py.so --fargs " + os.path.realpath(__file__),
         "-o",
         "output_http.so -p 8090 -w /usr/share/mjpg-streamer/www"],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL)
+    # TODO: Add notification if either mjpg-streamer or cvfilter_py.so aren't installed
 
 if __name__ == "__main__":
     start_mjpg_streamer()

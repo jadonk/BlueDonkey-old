@@ -23,7 +23,8 @@ quit
 * Install BlueDonkey and dependencies
 ```sh
 sudo apt-get update
-sudo apt-get install -y python3-pip python3-wheel python3-opencv libopencv-dev python3-pygame
+sudo apt-get install -y python3-pip python3-wheel python3-opencv libopencv-dev python3-pygame mjpg-streamer-opencv-python
+sudo pip3 install cgroups
 git clone https://github.com/jadonk/bluedonkey
 cd bluedonkey
 sudo ./install.sh
