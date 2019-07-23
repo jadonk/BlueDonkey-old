@@ -6,8 +6,7 @@ This is based on Debian Buster, which has support for python3-opencv.
 
 * Program the following image using Etcher.io:
   * ~~https://rcn-ee.net/rootfs/bb.org/testing/2018-12-16/buster-iot/bone-debian-buster-iot-armhf-2018-12-16-4gb.img.xz~~
-  * ~~https://rcn-ee.net/rootfs/bb.org/testing/2019-03-24/buster-iot/bone-debian-buster-iot-armhf-2019-03-24-4gb.img.xz~~
-  * https://rcn-ee.net/rootfs/bb.org/testing/2019-07-14/buster-iot/bone-debian-10.0-iot-armhf-2019-07-14-4gb.img.xz
+  * https://rcn-ee.net/rootfs/bb.org/testing/2019-03-24/buster-iot/bone-debian-buster-iot-armhf-2019-03-24-4gb.img.xz
 
 * Get your board on the Internet
   * Your board should have an SSID of BeagleBone-XXXX, where XXXX is random. Password is 'BeagleBone'.

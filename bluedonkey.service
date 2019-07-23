@@ -4,7 +4,8 @@ After=multi-user.target
 
 [Service]
 Type=idle
-ExecStart=/opt/bluedonkey/bluedonkey_run.sh
+ExecStart=/opt/bluedonkey/bluedonkey.py
+CPUQuota=70%
 
 [Install]
 WantedBy=multi-user.target
