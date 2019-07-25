@@ -15,7 +15,8 @@ if not os.path.exists('/sys/class/gpio/gpio69'):
     exportFile.close
 
 print("Loading Python modules for car_control. Please be patient.")
-import rcpy, datetime, time, pygame, math
+import rcpy, datetime, time, math
+#import pygame
 from rcpy.servo import servo1
 from rcpy.servo import servo3
 from rcpy.button import mode, pause
@@ -213,20 +214,10 @@ class car_control:
         return print_string
 
     def __init__(self):
-        # Display link to stream and dashboard
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        ip_addr = s.getsockname()[0]
-        s.close()
-        print("Open http://" + str(ip_addr) + ":8090 for video stream")
-        print("Open http://" + str(ip_addr) + ":1880/ui for dashboard")
-
         # Start up the pause button handler
         self.paused = PauseButtonEvent()
         self.paused.start()
-
         self.enable_steering_and_throttle()
-
         self.fps = track_fps()
 
 class PauseButtonEvent(button.ButtonEvent):
@@ -253,12 +244,14 @@ class track_fps:
     stamp_time = 0
     old_time = 0
     def __init__(self):
-        self.clock = pygame.time.Clock()
+        #self.clock = pygame.time.Clock()
         self.old_time = datetime.datetime.now()
     def tick(self):
-        self.clock.tick()
+        #self.clock.tick()
+        return
     def get(self):
-        return self.clock.get_fps()
+        #return self.clock.get_fps()
+        return 0
     def stamp(self):
         self.stamp_time = datetime.datetime.now()
         msec_stamp = int((self.stamp_time.second * 1000) + (self.stamp_time.microsecond / 1000))

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3.7
 print("Loading Python modules for line_follower. Please be patient.")
-import os, sys, socket
+import os, sys
 import cv2, numpy
 print("Done importing modules for now!")
 
@@ -49,8 +49,9 @@ class mjs_filter:
     threshold = COLOR_THRESHOLD_MAX
     
     def __init__(self):
-        import car_control
-        self.c = car_control.car_control()
+        #import car_control
+        #self.c = car_control.car_control()
+        self.c = dummy_car_control()
 
     ###########
     # Loop
@@ -117,3 +118,9 @@ class mjs_filter:
             self.c.update(False)
 
         return frame
+
+class dummy_car_control():
+    def tick(self):
+        return
+    def update(self,line):
+        return ""
