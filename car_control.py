@@ -4,7 +4,7 @@ import rcpy, datetime, time, math
 import pygame
 from rcpy.servo import servo1
 from rcpy.servo import servo3
-from rcpy.button import mode, pause
+from rcpy.button import modeAI, pauseAI
 from rcpy import button
 from rcpy.led import red
 from rcpy.led import green
@@ -135,6 +135,9 @@ class car_control:
     def tick(self):
         self.fps.tick()
 
+    def pauseToggle(self):
+        self.paused.toggle()
+
     def update(self, line):
         self.fps.stamp()
         if line:
@@ -178,12 +181,12 @@ class car_control:
         else:
             self.throttle_output = self.throttle_output * 0.99
     
-        if self.paused.state():
+        if self.paused.state:
             self.throttle_output = 0
             self.steering_output = STEERING_OFFSET
             time.sleep(0.001)
 
-        return(self.paused.state(), self.throttle_output, self.steering_output, self.fps.get())
+        return(self.paused.state, self.throttle_output, self.steering_output, self.fps.get())
 
     def __init__(self):
         # Start up the pause button handler
@@ -198,11 +201,14 @@ class PauseButtonEvent(button.ButtonEvent):
         # Start-up in 'paused' mode and handle button presses to exit paused mode
         red.on()
         green.off()
-        button.ButtonEvent.__init__(self, pause, button.ButtonEvent.PRESSED)
+        #button.ButtonEvent.__init__(self, pause, button.ButtonEvent.PRESSED)
+        button.ButtonEvent.__init__(self, pauseAI, button.ButtonEvent.PRESSED)
         #self.start()
     def action(self, event):
+        self.toggle()
+    def toggle(self):
         self.state = not self.state
-        if paused:
+        if self.state:
             red.on()
             green.off()
         else:
