@@ -6,7 +6,7 @@ print("Done importing modules for now!")
 
 # Line follower routine implemented as an mjpg_streamer filter
 BINARY_VIEW = True # Include informational updates to image
-COLOR_THRESHOLD_MIN = 250
+COLOR_THRESHOLD_MIN = 240
 COLOR_THRESHOLD_MAX = 254
 COLOR_THRESHOLD_DELTA = 1
 PERCENT_THRESHOLD_MIN = 2
@@ -20,28 +20,28 @@ FONT = cv2.FONT_HERSHEY_SIMPLEX
 roi_masks = numpy.array([
         # Focus on the center
         # 8/20ths in from the left
-        # 8/20ths down from the top
-        # 1/20ths tall
-        # 4x1 pixel count
-        [int(8*FRAME_WIDTH/20), int(8*FRAME_HEIGHT/20), int(1*FRAME_HEIGHT/20), int((4*FRAME_WIDTH/20)*(1*FRAME_HEIGHT/20)/100)],
-        # Then look wider
-        # 6/20ths in from the sides
-        # 9/20ths down from the top
-        # 1/20ths tall
-        # 8x1 pixel count
-        [int(6*FRAME_WIDTH/20), int(9*FRAME_HEIGHT/20), int(1*FRAME_HEIGHT/20), int((8*FRAME_WIDTH/20)*(1*FRAME_HEIGHT/20)/100)],
-        # Then look wider
-        # 4/20ths in from the sides
         # 10/20ths down from the top
         # 1/20ths tall
-        # 12x1 pixel count
-        [int(4*FRAME_WIDTH/20), int(10*FRAME_HEIGHT/20), int(1*FRAME_HEIGHT/20), int((12*FRAME_WIDTH/20)*(1*FRAME_HEIGHT/20)/100)],
-        # Then really wide and taller
-        # 0/20ths in from the sides
+        # 4x1 pixel count
+        [int(8*FRAME_WIDTH/20), int(10*FRAME_HEIGHT/20), int(1*FRAME_HEIGHT/20), int((4*FRAME_WIDTH/20)*(1*FRAME_HEIGHT/20)/100)],
+        # Then look wider
+        # 6/20ths in from the sides
         # 11/20ths down from the top
         # 1/20ths tall
+        # 8x1 pixel count
+        [int(6*FRAME_WIDTH/20), int(11*FRAME_HEIGHT/20), int(1*FRAME_HEIGHT/20), int((8*FRAME_WIDTH/20)*(1*FRAME_HEIGHT/20)/100)],
+        # Then look wider
+        # 4/20ths in from the sides
+        # 12/20ths down from the top
+        # 1/20ths tall
+        # 12x1 pixel count
+        [int(4*FRAME_WIDTH/20), int(12*FRAME_HEIGHT/20), int(1*FRAME_HEIGHT/20), int((12*FRAME_WIDTH/20)*(1*FRAME_HEIGHT/20)/100)],
+        # Then really wide and taller
+        # 0/20ths in from the sides
+        # 13/20ths down from the top
+        # 1/20ths tall
         # 20x1 pixel count
-        [int(0*FRAME_WIDTH/10), int(11*FRAME_HEIGHT/20), int(1*FRAME_HEIGHT/20), int((20*FRAME_WIDTH/20)*(1*FRAME_HEIGHT/20)/100)],
+        [int(0*FRAME_WIDTH/10), int(13*FRAME_HEIGHT/20), int(1*FRAME_HEIGHT/20), int((20*FRAME_WIDTH/20)*(1*FRAME_HEIGHT/20)/100)],
     ], dtype=numpy.int32)
     
 class mjs_filter:

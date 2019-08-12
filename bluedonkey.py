@@ -41,9 +41,9 @@ def init_filter():
     #errorfile = open("/tmp/bluedonkey.err.txt", 'w+')
     #sys.stderr = errorfile
     sys.stderr = sys.stdout
-    #sock_in = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    #sock_in.connect(("127.0.0.1", SOCK_IN))
-    #sys.stdin = sock_in.makefile('r', buffering=None)
+    sock_in = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock_in.connect(("127.0.0.1", SOCK_IN))
+    sys.stdin = sock_in.makefile('r', buffering=None)
 
     #cg = cgroups.Cgroup('bluedonkey')
     #pid  = os.getpid()

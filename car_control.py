@@ -186,6 +186,7 @@ class car_control:
             self.steering_output = STEERING_OFFSET
             time.sleep(0.001)
 
+        self.set_servos(self.throttle_output, self.steering_output)
         return(self.paused.state, self.throttle_output, self.steering_output, self.fps.get())
 
     def __init__(self):
