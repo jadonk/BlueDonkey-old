@@ -6,10 +6,10 @@ print("Done importing modules for now!")
 
 # Line follower routine implemented as an mjpg_streamer filter
 BINARY_VIEW = True # Include informational updates to image
-COLOR_THRESHOLD_MIN = 240
+COLOR_THRESHOLD_MIN = 235
 COLOR_THRESHOLD_MAX = 254
 COLOR_THRESHOLD_DELTA = 1
-PERCENT_THRESHOLD_MIN = 2
+PERCENT_THRESHOLD_MIN = 3
 PERCENT_THRESHOLD_MAX = 20
 FRAME_WIDTH = 160
 FRAME_HEIGHT = 120
@@ -95,7 +95,7 @@ class mjs_filter:
                             thresh_color = cv2.cvtColor(thresh_mask, cv2.COLOR_GRAY2BGR)
                             frame[ top : bottom , left : right ] = thresh_color
 
-            status = self.c.update(line)
+            status = self.c.update(line, self.threshold)
             if BINARY_VIEW:
                 #cv2.putText(frame, status, (10,FRAME_HEIGHT-(int(FRAME_HEIGHT/4))), FONT, 0.3, (150,150,255))
                 if line:
@@ -113,6 +113,6 @@ class mjs_filter:
 
         except Exception as e:
             print(e)
-            self.c.update(False)
+            self.c.update(False, self.threshold)
 
         return frame

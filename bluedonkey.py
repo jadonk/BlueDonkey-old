@@ -64,7 +64,7 @@ class dummy_car_control():
         self.c.tick()
         return
 
-    def update(self, line):
+    def update(self, line, threshold):
         (paused, throttle, steering, fps) = self.c.update(line)
         if paused:
             print("P ", end="", flush=False)
@@ -76,6 +76,7 @@ class dummy_car_control():
             print("No line ", end="", flush=False)
         print("%06.2f %06.2f" % (throttle, steering), end="", flush=False)
         print(" %04.1f" % (fps), end="", flush=False)
+        print(" %03d" % (threshold), end="", flush=False)
         print("\r", end="", flush=True)
         return ""
 
