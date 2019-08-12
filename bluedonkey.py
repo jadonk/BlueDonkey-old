@@ -28,6 +28,7 @@ def init_filter():
         ip_addr = "localhost"
     print("Open http://" + str(ip_addr) + ":8090/?action=stream for video stream")
     print("Open http://" + str(ip_addr) + ":1880/ui for dashboard")
+    print("Run bluedonkey_listen.sh to listen for messages")
 
     # Redirect input/output to a socket
     SOCK_OUT = 3001
@@ -49,6 +50,16 @@ def init_filter():
     #cg.add(pid)
     #cg.set_cpu_limit(50)
     import line_follower
-    f = line_follower.mjs_filter()
+    #import car_control
+    #c = car_control.car_control()
+    c = dummy_car_control()
+    f = line_follower.mjs_filter(c)
     print("Returning process")
     return f.process
+
+class dummy_car_control():
+    def tick(self):
+        return
+    def update(self,line):
+        print(*line)
+        return ""

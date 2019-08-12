@@ -48,10 +48,8 @@ class mjs_filter:
     frame_cnt = 0
     threshold = COLOR_THRESHOLD_MAX
     
-    def __init__(self):
-        #import car_control
-        #self.c = car_control.car_control()
-        self.c = dummy_car_control()
+    def __init__(self, car_control):
+        self.c = car_control
 
     ###########
     # Loop
@@ -118,9 +116,3 @@ class mjs_filter:
             self.c.update(False)
 
         return frame
-
-class dummy_car_control():
-    def tick(self):
-        return
-    def update(self,line):
-        return ""
