@@ -1,29 +1,12 @@
 #!/usr/bin/env python3.7
-import os, sys
-
-# Make sure we are running as 'root' under Python 3.7
-# This is only required for rcpy access through the PRU
-if not os.geteuid() == 0:
-    sys.exit("\nPlease run as root.\n")
-if sys.version_info < (3,7):
-    sys.exit("\nPlease run under python3.7\n")
-
-# Enable GPIO for XXX
-if not os.path.exists('/sys/class/gpio/gpio69'):
-    exportFile = open("/sys/class/gpio/export", "w")
-    exportFile.write("69\n")
-    exportFile.close
-
 print("Loading Python modules for car_control. Please be patient.")
 import rcpy, datetime, time, math
-#import pygame
 from rcpy.servo import servo1
 from rcpy.servo import servo3
 from rcpy.button import mode, pause
 from rcpy import button
 from rcpy.led import red
 from rcpy.led import green
-import socket
 print("Done importing modules for now!")
 
 # This car_control routine was originally part of the OpenMV project.
@@ -152,7 +135,6 @@ class car_control:
         self.fps.tick()
 
     def update(self, line):
-        print_string = ""
         self.fps.stamp()
         if line:
             self.fps.update()
@@ -179,7 +161,7 @@ class car_control:
             # Figure out throttle and do throttle PID
             #
     
-            throttle_new_result = figure_out_my_throttle(self.steering_output)
+            throttle_new_result = self.figure_out_my_throttle(self.steering_output)
             throttle_delta_result = (throttle_new_result - self.throttle_old_result) if (self.throttle_old_result != None) else 0
             self.throttle_old_result = throttle_new_result
     
@@ -196,22 +178,11 @@ class car_control:
             self.throttle_output = self.throttle_output * 0.99
     
         if self.paused.state():
-            print_string = "Paus %03d %03d %03d %05d %05d" % \
-                (self.steering_output, self.throttle_output, 0, 0, 0)
             self.throttle_output = 0
             self.steering_output = STEERING_OFFSET
             time.sleep(0.001)
-        else:
-            if line:
-                print_string = " %03d %03d %03d %03d %05d %05d" % \
-                    (x, self.steering_output, self.throttle_output, 0, 0, 0)
-            else:
-                print_string = "Lost %03d %03d %03d %05d %05d" % \
-                    (self.steering_output, self.throttle_output, 0, 0, 0)
-    
-        self.set_servos(self.throttle_output, self.steering_output)
-        print("%06.2f %s\r" % (self.fps.get(), print_string), end="")
-        return print_string
+
+        return(self.paused.state(), self.throttle_output, self.steering_output)
 
     def __init__(self):
         # Start up the pause button handler
@@ -238,7 +209,7 @@ class PauseButtonEvent(button.ButtonEvent):
             red.off()
     def state(self):
         return self.state
-        
+
 class track_fps:
     delta_time = 0
     stamp_time = 0

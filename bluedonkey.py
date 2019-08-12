@@ -50,16 +50,31 @@ def init_filter():
     #cg.add(pid)
     #cg.set_cpu_limit(50)
     import line_follower
-    #import car_control
-    #c = car_control.car_control()
-    c = dummy_car_control()
-    f = line_follower.mjs_filter(c)
+    dc = dummy_car_control()
+    f = line_follower.mjs_filter(dc)
     print("Returning process")
     return f.process
 
 class dummy_car_control():
+    def __init__(self):
+        import car_control
+        self.c = car_control.car_control()
+
     def tick(self):
+        self.c.tick()
         return
-    def update(self,line):
-        print("%03d %03d\r" % (line[2], line[3]), end="", flush=True)
+
+    def update(self, line):
+        (paused, throttle, steering) = self.c.update(line)
+        if paused:
+            print("P ", end="", flush=False)
+        else:
+            print("  ", end="", flush=False)
+        if line:
+            print("%03d %03d " % (line[2], line[3]), end="", flush=False)
+        else:
+            print("No line ", end="", flush=False)
+        print("%06.2f %06.2f" % (throttle, steering), end="", flush=False)
+        print("\r", end="", flush=True)
         return ""
+
