@@ -65,7 +65,7 @@ class dummy_car_control():
         return
 
     def update(self, line):
-        (paused, throttle, steering) = self.c.update(line)
+        (paused, throttle, steering, fps) = self.c.update(line)
         if paused:
             print("P ", end="", flush=False)
         else:
@@ -75,6 +75,7 @@ class dummy_car_control():
         else:
             print("No line ", end="", flush=False)
         print("%06.2f %06.2f" % (throttle, steering), end="", flush=False)
+        print(" %04.1f" % (fps), end="", flush=False)
         print("\r", end="", flush=True)
         return ""
 
