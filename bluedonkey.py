@@ -61,5 +61,5 @@ class dummy_car_control():
     def tick(self):
         return
     def update(self,line):
-        print(*line)
+        print("%03d %03d\r" % (line[2], line[3]), end="", flush=True)
         return ""
