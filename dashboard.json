@@ -1,0 +1,329 @@
+[
+    {
+        "id": "e3fd3532.dbcba8",
+        "type": "tab",
+        "label": "BlueDonkey Dashboard",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "1bfa8d81.e67b02",
+        "type": "ui_template",
+        "z": "e3fd3532.dbcba8",
+        "group": "7c787ee9.a212f",
+        "name": "",
+        "order": 0,
+        "width": 0,
+        "height": 0,
+        "format": "<img src=\"https://hackster.imgix.net/uploads/attachments/464262/beagleboneblue_blink_LED.png?auto=compress%2Cformat&amp;w=1280&amp;h=960&amp;fit=max\" />\n",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "templateScope": "local",
+        "x": 360,
+        "y": 40,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "eca802ca.356fe",
+        "type": "inject",
+        "z": "e3fd3532.dbcba8",
+        "name": "startup",
+        "topic": "startup",
+        "payload": "",
+        "payloadType": "date",
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "x": 158,
+        "y": 37,
+        "wires": [
+            [
+                "1bfa8d81.e67b02",
+                "edad301f.6f497"
+            ]
+        ]
+    },
+    {
+        "id": "46df3e7.79a07c",
+        "type": "ui_template",
+        "z": "e3fd3532.dbcba8",
+        "group": "91a2ff29.dd051",
+        "name": "camera",
+        "order": 0,
+        "width": "8",
+        "height": "8",
+        "format": "<img ng-src=\"{{msg.payload}}\" width=\"320\" height=\"240\" alt=\"image\" />\n<!--\n<img src=\"http://192.168.7.2:8090/?action=stream\" width=\"320\" height=\"240\" alt=\"image\" />\n-->",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "templateScope": "local",
+        "x": 452.5,
+        "y": 117,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "e778241f.93ca78",
+        "type": "function",
+        "z": "e3fd3532.dbcba8",
+        "name": "inject url",
+        "func": "msg.payload = \"http://\" + msg.payload[0].address + \":8090/?action=stream\";\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 289.16666412353516,
+        "y": 174.77777862548828,
+        "wires": [
+            [
+                "46df3e7.79a07c",
+                "7d40d841.010ee8"
+            ]
+        ]
+    },
+    {
+        "id": "f1125624.1ece78",
+        "type": "file",
+        "z": "e3fd3532.dbcba8",
+        "name": "red",
+        "filename": "/sys/class/leds/red/brightness",
+        "appendNewline": true,
+        "createDir": false,
+        "overwriteFile": "true",
+        "x": 470,
+        "y": 460,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "33c5ae4c.2be942",
+        "type": "ui_switch",
+        "z": "e3fd3532.dbcba8",
+        "name": "",
+        "label": "red",
+        "tooltip": "",
+        "group": "6e257b08.90f294",
+        "order": 0,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "",
+        "style": "",
+        "onvalue": "1",
+        "onvalueType": "num",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "0",
+        "offvalueType": "num",
+        "officon": "",
+        "offcolor": "",
+        "x": 170,
+        "y": 460,
+        "wires": [
+            [
+                "f1125624.1ece78"
+            ]
+        ]
+    },
+    {
+        "id": "244ac9ce.1656b6",
+        "type": "file",
+        "z": "e3fd3532.dbcba8",
+        "name": "green",
+        "filename": "/sys/class/leds/green/brightness",
+        "appendNewline": true,
+        "createDir": false,
+        "overwriteFile": "true",
+        "x": 470,
+        "y": 520,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "690d20fd.9b8c4",
+        "type": "ui_switch",
+        "z": "e3fd3532.dbcba8",
+        "name": "",
+        "label": "green",
+        "tooltip": "",
+        "group": "6e257b08.90f294",
+        "order": 0,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "",
+        "style": "",
+        "onvalue": "1",
+        "onvalueType": "num",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "0",
+        "offvalueType": "num",
+        "officon": "",
+        "offcolor": "",
+        "x": 170,
+        "y": 520,
+        "wires": [
+            [
+                "244ac9ce.1656b6"
+            ]
+        ]
+    },
+    {
+        "id": "7d40d841.010ee8",
+        "type": "debug",
+        "z": "e3fd3532.dbcba8",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "x": 450,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "edad301f.6f497",
+        "type": "hostip",
+        "z": "e3fd3532.dbcba8",
+        "name": "Host IP",
+        "x": 165.55555725097656,
+        "y": 103.33334350585938,
+        "wires": [
+            [
+                "e778241f.93ca78",
+                "4cc46570.33e7dc"
+            ]
+        ]
+    },
+    {
+        "id": "4cc46570.33e7dc",
+        "type": "debug",
+        "z": "e3fd3532.dbcba8",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "x": 532.2222222222222,
+        "y": 65.55555555555556,
+        "wires": []
+    },
+    {
+        "id": "993f3691.b619d8",
+        "type": "udp in",
+        "z": "e3fd3532.dbcba8",
+        "name": "bluedonkey out",
+        "iface": "",
+        "port": "3001",
+        "ipv": "udp4",
+        "multicast": "false",
+        "group": "",
+        "datatype": "utf8",
+        "x": 195.50894165039062,
+        "y": 295.83631134033203,
+        "wires": [
+            [
+                "e3e99964.c28e28",
+                "ff0d16b6.da76b8"
+            ]
+        ]
+    },
+    {
+        "id": "e3e99964.c28e28",
+        "type": "ui_text",
+        "z": "e3fd3532.dbcba8",
+        "group": "145c88a3.bb04f7",
+        "order": 0,
+        "width": "2",
+        "height": "1",
+        "name": "",
+        "label": "",
+        "format": "{{msg.payload}}",
+        "layout": "row-left",
+        "x": 464.5119323730469,
+        "y": 292.5922622680664,
+        "wires": []
+    },
+    {
+        "id": "ff0d16b6.da76b8",
+        "type": "debug",
+        "z": "e3fd3532.dbcba8",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "x": 421.5119342803955,
+        "y": 239.94942474365234,
+        "wires": []
+    },
+    {
+        "id": "7c787ee9.a212f",
+        "type": "ui_group",
+        "z": "",
+        "name": "Board",
+        "tab": "c98b1e6c.9aa61",
+        "order": 6,
+        "disp": true,
+        "width": "8",
+        "collapse": false
+    },
+    {
+        "id": "91a2ff29.dd051",
+        "type": "ui_group",
+        "z": "",
+        "name": "Camera",
+        "tab": "e2fcadce.0e4f4",
+        "order": 4,
+        "disp": true,
+        "width": "8",
+        "collapse": false
+    },
+    {
+        "id": "6e257b08.90f294",
+        "type": "ui_group",
+        "z": "",
+        "name": "Controls",
+        "tab": "e2fcadce.0e4f4",
+        "order": 1,
+        "disp": true,
+        "width": "6",
+        "collapse": false
+    },
+    {
+        "id": "145c88a3.bb04f7",
+        "type": "ui_group",
+        "z": "",
+        "name": "Console",
+        "tab": "e2fcadce.0e4f4",
+        "disp": true,
+        "width": "6",
+        "collapse": false
+    },
+    {
+        "id": "c98b1e6c.9aa61",
+        "type": "ui_tab",
+        "name": "Tab 2",
+        "icon": "dashboard",
+        "order": 2
+    },
+    {
+        "id": "e2fcadce.0e4f4",
+        "type": "ui_tab",
+        "z": "",
+        "name": "BeagleBone AI - BlueDonkey",
+        "icon": "dashboard",
+        "order": 1,
+        "disabled": false,
+        "hidden": false
+    }
+]
