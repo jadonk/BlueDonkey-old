@@ -2,11 +2,11 @@ Latest version is at https://github.com/jadonk/BlueDonkey
 
 # Setup image
 
-This is based on Debian Buster, which has support for python3-opencv.
-
 * Program the following image using Etcher.io:
   * ~~https://rcn-ee.net/rootfs/bb.org/testing/2018-12-16/buster-iot/bone-debian-buster-iot-armhf-2018-12-16-4gb.img.xz~~
-  * https://rcn-ee.net/rootfs/bb.org/testing/2019-03-24/buster-iot/bone-debian-buster-iot-armhf-2019-03-24-4gb.img.xz
+  * ~~https://rcn-ee.net/rootfs/bb.org/testing/2019-03-24/buster-iot/bone-debian-buster-iot-armhf-2019-03-24-4gb.img.xz~~
+  * AI: https://debian.beagleboard.org/images/am57xx-debian-9.9-lxqt-armhf-2019-08-03-4gb.img.xz
+  * Black/Blue: https://debian.beagleboard.org/images/bone-debian-9.9-iot-armhf-2019-08-03-4gb.img.xz
 
 * Get your board on the Internet
   * Your board should have an SSID of BeagleBone-XXXX, where XXXX is random. Password is 'BeagleBone'.
@@ -22,12 +22,12 @@ quit
 
 * Install BlueDonkey and dependencies
 ```sh
-sudo apt-get update
-sudo apt-get install -y python3-pip python3-wheel python3-pygame mjpg-streamer-opencv-python socat
-sudo pip3 install cgroups
+sudo apt update
+sudo apt install -y python3-pip python3-wheel python3-pygame mjpg-streamer-opencv-python socat
+#sudo pip3 install cgroups
 git clone https://github.com/jadonk/bluedonkey
 cd bluedonkey
-sudo ./install.sh
+#sudo ./install.sh
 ```
 
 # Build car
