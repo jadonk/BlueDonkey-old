@@ -23,11 +23,10 @@ quit
 * Install BlueDonkey and dependencies
 ```sh
 sudo apt update
-sudo apt install -y python3-pip python3-wheel python3-pygame mjpg-streamer-opencv-python socat
-#sudo pip3 install cgroups
+#sudo apt install -y python3-pygame
+sudo apt install -y python3-opencv python3-libgpiod mjpg-streamer-opencv-python socat
 git clone https://github.com/jadonk/bluedonkey
 cd bluedonkey
-#sudo ./install.sh
 ```
 
 # Build car
@@ -36,13 +35,15 @@ cd bluedonkey
 
 # Run
 
-Set BINARY_VIEW if you want to save images. You'll also need to nsert a microSD card and mount it at IMG_DIR.
+```sh
+./bluedonkey.py
+```
 
 The RED LED should come up on boot.
 
 You should be able to monitor the running line follower application.
 ```sh
-bluedonkey_listen
+./bluedonkey_listen.sh
 ```
 
 Press the PAU (pause) button to start driving! The RED LED should go off and the GREEN LED should turn on.

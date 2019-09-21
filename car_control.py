@@ -1,7 +1,7 @@
 #!/usr/bin/env python3.7
 print("Loading Python modules for car_control. Please be patient.")
 import rcpy, datetime, time, math
-import pygame
+#import pygame
 from rcpy.servo import servo1
 from rcpy.servo import servo3
 from rcpy.button import modeAI, pauseAI
@@ -223,13 +223,14 @@ class track_fps:
     stamp_time = 0
     old_time = 0
     def __init__(self):
-        self.clock = pygame.time.Clock()
+        #self.clock = pygame.time.Clock()
         self.old_time = datetime.datetime.now()
     def tick(self):
-        self.clock.tick()
+        #self.clock.tick()
         return
     def get(self):
-        return self.clock.get_fps()
+        #return self.clock.get_fps()
+        return 0
     def stamp(self):
         self.stamp_time = datetime.datetime.now()
         msec_stamp = int((self.stamp_time.second * 1000) + (self.stamp_time.microsecond / 1000))
